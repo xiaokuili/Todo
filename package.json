@@ -1,0 +1,17 @@
+{
+  "name": "global-todo",
+  "version": "1.0.0",
+  "description": "A simple global todo list with CLI and Git sync",
+  "main": "index.js",
+  "bin": {
+    "todo": "./bin/todo.js"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": ["todo", "cli", "task"],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {}
+}
+
