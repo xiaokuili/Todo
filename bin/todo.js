@@ -76,20 +76,21 @@ function listTodos(filter = {}) {
     const process = todo.process || 0;
     const processBar = '█'.repeat(Math.floor(process / 10)) + '░'.repeat(10 - Math.floor(process / 10));
     const end = todo.end ? `📅 ${formatDate(todo.end)}` : '';
+    const date = todo.date ? `🕐 ${todo.date}` : '';
     const project = todo.project ? `#${todo.project}` : '';
     
     console.log(`${star} [${index + 1}] ${todo.name}`);
     if (todo.description) {
       console.log(`    ${todo.description}`);
     }
-    console.log(`    进度: ${processBar} ${process}% ${end} ${project}`);
+    console.log(`    进度: ${processBar} ${process}% ${date} ${end} ${project}`);
     console.log(`    ID: ${todo.id}`);
     console.log('');
   });
 }
 
 // 添加待办
-function addTodo(name, description = '', project = '', star = false, end = '') {
+function addTodo(name, description = '', project = '', star = false, end = '', date = '') {
   const todos = loadTodos();
   const newTodo = {
     id: generateId(),
@@ -99,6 +100,7 @@ function addTodo(name, description = '', project = '', star = false, end = '') {
     star: star === true || star === 'true',
     process: 0,
     end: end || null,
+    date: date || null,
     created: new Date().toISOString(),
     updated: new Date().toISOString()
   };
@@ -200,13 +202,14 @@ function main() {
     case 'add':
       if (!args[1]) {
         console.error('❌ 请提供待办事项名称');
-        console.log('用法: todo add <name> [description] [--project <project>] [--star] [--end <date>]');
+        console.log('用法: todo add <name> [description] [--project <project>] [--star] [--date <date>] [--end <date>]');
         process.exit(1);
       }
       const name = args[1];
       let description = '';
       let project = '';
       let star = false;
+      let date = '';
       let end = '';
       
       for (let i = 2; i < args.length; i++) {
@@ -215,6 +218,9 @@ function main() {
           i++;
         } else if (args[i] === '--star') {
           star = true;
+        } else if (args[i] === '--date' && args[i + 1]) {
+          date = args[i + 1];
+          i++;
         } else if (args[i] === '--end' && args[i + 1]) {
           end = args[i + 1];
           i++;
@@ -222,7 +228,7 @@ function main() {
           description = args[i];
         }
       }
-      addTodo(name, description, project, star, end);
+      addTodo(name, description, project, star, end, date);
       break;
 
     case 'update':
@@ -249,6 +255,9 @@ function main() {
           updates.star = true;
         } else if (args[i] === '--unstar') {
           updates.star = false;
+        } else if (args[i] === '--date' && args[i + 1]) {
+          updates.date = args[i + 1];
+          i++;
         } else if (args[i] === '--end' && args[i + 1]) {
           updates.end = args[i + 1];
           i++;
@@ -311,6 +320,7 @@ function main() {
     [description]            描述
     --project <name>         项目名称
     --star                   标记为星标
+    --date <date>            计划日期/时间
     --end <date>             截止日期
 
   update <id>                更新待办事项
@@ -320,6 +330,7 @@ function main() {
     --process <number>       更新进度 (0-100)
     --star                   添加星标
     --unstar                 移除星标
+    --date <date>            更新计划日期/时间
     --end <date>             更新截止日期
 
   done <id>                  标记为完成 (进度 100%)

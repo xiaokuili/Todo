@@ -9,27 +9,53 @@
   - name (名称)
   - description (描述)
   - star (星标/重要)
+  - date (计划日期/时间)
   - end (截止日期)
   - process (进度 0-100)
   - project (项目名称)
 
 ## 安装
 
-### 1. 全局安装 CLI 工具
+### 方法 1：使用 npm link（推荐，最简单）
 
 ```bash
 cd todo
 npm link
 ```
 
-或者使用 npm install -g（需要管理员权限）
+安装完成后，验证：
+```bash
+todo help
+```
+
+如果看到帮助信息，说明安装成功！现在可以在任何目录使用 `todo` 命令了。
+
+### 方法 2：使用 npm install -g
+
+```bash
+cd todo
+npm install -g .
+```
+
+### 方法 3：直接使用（无需安装）
+
+如果不想全局安装，也可以直接使用：
+```bash
+cd todo
+node bin/todo.js list
+```
+
+或者创建别名（添加到 `~/.zshrc` 或 `~/.bashrc`）：
+```bash
+alias todo="node /Users/vincent/code/play_mess/todo/bin/todo.js"
+```
 
 ### 2. 配置 Git 仓库（用于多设备同步）
 
 ```bash
 cd todo
 git init
-git remote add origin <your-git-repo-url>  # 可选：GitHub/GitLab 等
+git remote add origin https://github.com/xiaokuili/Todo # 可选：GitHub/GitLab 等
 ```
 
 ## 使用方法
