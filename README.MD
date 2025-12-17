@@ -49,7 +49,7 @@ git remote add origin https://github.com/xiaokuili/Todo # 可选：GitHub/GitLab
 todo list
 
 # 添加待办
-todo add "完成项目文档" "需要写 API 文档" --project work --star
+todo add "完成项目文档" --project work
 
 # 更新状态和步骤
 todo update <id> --status in_progress --steps "步骤1,步骤2"
@@ -67,14 +67,14 @@ todo help
 ### 高级用法
 
 ```bash
-# 只显示星标待办
-todo list --star
-
 # 按项目过滤
 todo list --project work
 
+# 按状态过滤
+todo list --status pending
+
 # 更新多个字段
-todo update <id> --name "新名称" --status completed --star
+todo update <id> --name "新名称" --status completed
 
 # Git 同步
 todo pull          # 从远程拉取
@@ -138,7 +138,7 @@ todo sync          # 一键同步（拉取+提交+推送）
 
 ```bash
 # 添加一个重要的待办
-todo add "重构用户模块" "优化代码结构" --project dev --star --end "2024-12-31"
+todo add "重构用户模块" --project dev --end "2024-12-31"
 
 # 查看所有待办
 todo list

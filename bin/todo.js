@@ -202,76 +202,97 @@ function getStatusText(todo) {
   return '?';
 }
 
-// 格式化时间显示（单行）
+// 解析时间字符串为分钟数（用于排序）
+function parseTime(timeStr) {
+  if (!timeStr) return null;
+  const timePattern = /^(\d{1,2}):(\d{2})$/;
+  const match = timeStr.match(timePattern);
+  if (match) {
+    return parseInt(match[1]) * 60 + parseInt(match[2]);
+  }
+  return null;
+}
+
+// 按时间排序待办事项
+function sortTodosByTime(todos) {
+  return [...todos].sort((a, b) => {
+    // 优先比较 start 时间
+    const aStart = parseTime(a.start);
+    const bStart = parseTime(b.start);
+    if (aStart !== null && bStart !== null) {
+      return aStart - bStart;
+    }
+    if (aStart !== null) return -1; // 有 start 的排在前面
+    if (bStart !== null) return 1;
+    
+    // 其次比较 end 时间
+    const aEnd = parseTime(a.end);
+    const bEnd = parseTime(b.end);
+    if (aEnd !== null && bEnd !== null) {
+      return aEnd - bEnd;
+    }
+    if (aEnd !== null) return -1; // 有 end 的排在前面
+    if (bEnd !== null) return 1;
+    
+    // 最后按创建时间排序（早创建的在前）
+    const aCreated = a.created ? new Date(a.created).getTime() : 0;
+    const bCreated = b.created ? new Date(b.created).getTime() : 0;
+    return aCreated - bCreated;
+  });
+}
+
+// 格式化时间显示（紧凑单行）
 function formatTimeDisplay(todo) {
   const timeParts = [];
   
-  // 日期
+  // 日期（如果存在）
   if (todo.date) {
     const dateObj = new Date(todo.date);
-    const dateStr = dateObj.toLocaleDateString('zh-CN', { 
-      month: '2-digit', 
-      day: '2-digit'
-    });
-    timeParts.push(`📅 ${dateStr}`);
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    
+    const dateStr = dateObj.toISOString().split('T')[0];
+    const todayStr = today.toISOString().split('T')[0];
+    const tomorrowStr = tomorrow.toISOString().split('T')[0];
+    const yesterdayStr = yesterday.toISOString().split('T')[0];
+    
+    if (dateStr === todayStr) {
+      timeParts.push(`${colors.cyan}今天${colors.reset}`);
+    } else if (dateStr === tomorrowStr) {
+      timeParts.push(`${colors.yellow}明天${colors.reset}`);
+    } else if (dateStr === yesterdayStr) {
+      timeParts.push(`${colors.gray}昨天${colors.reset}`);
+    } else {
+      const displayDate = dateObj.toLocaleDateString('zh-CN', { 
+        month: '2-digit', 
+        day: '2-digit'
+      });
+      timeParts.push(`${colors.dim}${displayDate}${colors.reset}`);
+    }
   }
   
   // 开始和结束时间
   if (todo.start && todo.end) {
     const timePattern = /^\d{1,2}:\d{2}$/;
     if (timePattern.test(todo.start) && timePattern.test(todo.end)) {
-      timeParts.push(`🕐 ${todo.start}-${todo.end}`);
-    } else {
-      const startDate = todo.start ? formatDate(todo.start) : '';
-      const endDate = todo.end ? formatDate(todo.end) : '';
-      if (startDate && endDate) {
-        timeParts.push(`📅 ${startDate}-${endDate}`);
-      } else if (endDate) {
-        timeParts.push(`📅 ${endDate}`);
-      }
+      timeParts.push(`${colors.blue}${todo.start}-${todo.end}${colors.reset}`);
     }
   } else if (todo.end) {
     const timePattern = /^\d{1,2}:\d{2}$/;
     if (timePattern.test(todo.end)) {
-      timeParts.push(`🕐 ${todo.end}`);
-    } else {
-      timeParts.push(`📅 ${formatDate(todo.end)}`);
+      timeParts.push(`${colors.blue}${todo.end}${colors.reset}`);
     }
   } else if (todo.start) {
     const timePattern = /^\d{1,2}:\d{2}$/;
     if (timePattern.test(todo.start)) {
-      timeParts.push(`🕐 ${todo.start}`);
-    } else {
-      timeParts.push(`📅 ${formatDate(todo.start)}`);
+      timeParts.push(`${colors.blue}${todo.start}${colors.reset}`);
     }
   }
   
-  // 更新时间
-  if (todo.updated) {
-    const updatedDate = new Date(todo.updated);
-    const now = new Date();
-    const diffMs = now - updatedDate;
-    const diffMins = Math.floor(diffMs / 60000);
-    const diffHours = Math.floor(diffMs / 3600000);
-    const diffDays = Math.floor(diffMs / 86400000);
-    
-    let updatedStr = '';
-    if (diffMins < 60) {
-      updatedStr = `${diffMins}分钟前`;
-    } else if (diffHours < 24) {
-      updatedStr = `${diffHours}小时前`;
-    } else if (diffDays < 7) {
-      updatedStr = `${diffDays}天前`;
-    } else {
-      updatedStr = updatedDate.toLocaleDateString('zh-CN', { 
-        month: '2-digit', 
-        day: '2-digit'
-      });
-    }
-    timeParts.push(`🔄 ${updatedStr}`);
-  }
-  
-  return timeParts.length > 0 ? timeParts.join('  ') : '';
+  return timeParts.length > 0 ? timeParts.join(' ') : '';
 }
 
 // 格式化步骤显示
@@ -291,21 +312,25 @@ function displayTodo(todo, index) {
   const statusColor = getStatusColor(todo);
   const statusText = getStatusText(todo);
   const timeDisplay = formatTimeDisplay(todo);
-  const project = todo.project ? `#${todo.project}` : '';
-  const id = todo.id || '';
+  const project = todo.project ? `${colors.magenta}#${todo.project}${colors.reset}` : '';
   
-  // 第一行：id title project（带状态颜色）
-  const statusDisplay = `${statusColor}${statusText}${colors.reset}`;
-  const titleParts = [];
-  if (id) titleParts.push(`[${id}]`);
-  titleParts.push(todo.name);
-  if (project) titleParts.push(project);
+  // 状态图标（带颜色，加粗）
+  const statusDisplay = `${statusColor}${colors.bright}${statusText}${colors.reset}`;
   
-  console.log(`  ${statusDisplay} ${titleParts.join(' ')}`);
+  // 任务名称（加粗显示）
+  const nameDisplay = `${colors.bright}${todo.name}${colors.reset}`;
   
-  // 第二行：时间信息
+  // 构建主行：状态 + 名称 + 项目
+  const mainParts = [statusDisplay, nameDisplay];
+  if (project) {
+    mainParts.push(project);
+  }
+  
+  // 如果有时间信息，放在同一行后面
   if (timeDisplay) {
-    console.log(`    ${colors.dim}${timeDisplay}${colors.reset}`);
+    console.log(`  ${mainParts.join(' ')}  ${timeDisplay}`);
+  } else {
+    console.log(`  ${mainParts.join(' ')}`);
   }
   
   console.log(''); // 空行分隔
@@ -318,12 +343,8 @@ function displayTodosList(todos) {
     return;
   }
   
-  // 按 updated 排序（最新的在前），如果没有 updated 则使用 created
-  const sortedTodos = [...todos].sort((a, b) => {
-    const aTime = a.updated ? new Date(a.updated).getTime() : (a.created ? new Date(a.created).getTime() : 0);
-    const bTime = b.updated ? new Date(b.updated).getTime() : (b.created ? new Date(b.created).getTime() : 0);
-    return bTime - aTime;
-  });
+  // 按时间排序：优先按 start，其次按 end，最后按创建时间
+  const sortedTodos = sortTodosByTime(todos);
   
   console.log('📋 待办事项列表:\n');
   
@@ -349,8 +370,8 @@ function displayTodosGrouped(todos) {
     todosByDate[dateKey].push(todo);
   });
   
-  // 按日期排序（最新的在前）
-  const sortedDates = Object.keys(todosByDate).sort((a, b) => b.localeCompare(a));
+  // 按日期排序（从早到晚，符合日历逻辑）
+  const sortedDates = Object.keys(todosByDate).sort((a, b) => a.localeCompare(b));
   
   console.log('📋 待办事项列表:\n');
   
@@ -369,30 +390,13 @@ function displayTodosGrouped(todos) {
     
     console.log(`📅 ${dateTitle} (${dateKey})\n`);
     
-    // 按项目分组
-    const projectGroups = {};
-    dateTodos.forEach(todo => {
-      const project = todo.project || '未分类';
-      if (!projectGroups[project]) {
-        projectGroups[project] = [];
-      }
-      projectGroups[project].push(todo);
-    });
+    // 按时间排序：优先按 start，其次按 end，最后按创建时间
+    const sortedDateTodos = sortTodosByTime(dateTodos);
     
-    // 按项目排序并显示
+    // 显示该日期的所有任务
     let globalIndex = 1;
-    Object.keys(projectGroups).sort().forEach(project => {
-      const projectTodos = projectGroups[project];
-      // 按 updated 排序（最新的在前）
-      projectTodos.sort((a, b) => {
-        const aUpdated = a.updated ? new Date(a.updated).getTime() : (a.created ? new Date(a.created).getTime() : 0);
-        const bUpdated = b.updated ? new Date(b.updated).getTime() : (b.created ? new Date(b.created).getTime() : 0);
-        return bUpdated - aUpdated;
-      });
-      
-      projectTodos.forEach(todo => {
-        displayTodo(todo, globalIndex++);
-      });
+    sortedDateTodos.forEach(todo => {
+      displayTodo(todo, globalIndex++);
     });
     
     console.log(''); // 日期组之间的分隔
@@ -458,7 +462,6 @@ function addTodoInteractive() {
 
   const questions = [
     { key: 'name', prompt: '📝 任务名称: ', required: true },
-    { key: 'description', prompt: '📄 描述 (可选，直接回车跳过): ' },
     { key: 'project', prompt: '📁 项目 (可选，直接回车跳过): ' },
     { key: 'start', prompt: '🕐 开始时间 (可选，格式: HH:MM，直接回车跳过): ' },
     { key: 'end', prompt: '🕐 结束时间 (可选，格式: HH:MM，直接回车跳过): ' },
@@ -480,7 +483,7 @@ function addTodoInteractive() {
       // 添加待办
       addTodo(
         answers.name,
-        answers.description || '',
+        '',
         answers.project || '',
         answers.start || '',
         answers.end || '',
@@ -618,7 +621,6 @@ function main() {
       
       // 完整参数模式
       const name = args[1];
-      let description = '';
       let project = '';
       let start = '';
       let date = '';
@@ -648,11 +650,9 @@ function main() {
         } else if (args[i] === '--interactive' || args[i] === '-i') {
           addTodoInteractive();
           return;
-        } else if (!description) {
-          description = args[i];
         }
       }
-      addTodo(name, description, project, start, end, date, status, steps);
+      addTodo(name, '', project, start, end, date, status, steps);
       break;
 
     case 'update':
@@ -744,7 +744,6 @@ function main() {
   add [name]                 添加待办事项
     无参数                   交互式添加（推荐）
     仅名称                   快速添加（只输入名称）
-    [description]            描述
     --project <name>         项目名称
     --start <time>           开始时间（HH:MM 或日期）
     --end <time>             结束时间（HH:MM 或日期）
