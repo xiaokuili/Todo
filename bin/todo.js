@@ -4,31 +4,148 @@ const fs = require('fs');
 const path = require('path');
 const { execSync } = require('child_process');
 
-const TODO_FILE = path.join(__dirname, '..', 'todos.json');
-const TODO_DIR = path.dirname(TODO_FILE);
+const TODO_DIR = path.join(__dirname, '..', 'todos');
+const OLD_TODO_FILE = path.join(__dirname, '..', 'todos.json');
 
 // 确保目录存在
 if (!fs.existsSync(TODO_DIR)) {
   fs.mkdirSync(TODO_DIR, { recursive: true });
 }
 
-// 读取待办事项
-function loadTodos() {
-  if (!fs.existsSync(TODO_FILE)) {
-    return [];
+// 获取日期对应的文件路径
+function getDateFilePath(dateStr) {
+  let date;
+  if (dateStr) {
+    date = new Date(dateStr);
+  } else {
+    date = new Date();
+  }
+  const dateKey = date.toISOString().split('T')[0]; // YYYY-MM-DD
+  return path.join(TODO_DIR, `${dateKey}.json`);
+}
+
+// 从旧格式迁移数据
+function migrateOldData() {
+  if (!fs.existsSync(OLD_TODO_FILE)) {
+    return;
   }
   try {
-    const data = fs.readFileSync(TODO_FILE, 'utf8');
-    return JSON.parse(data);
+    const data = fs.readFileSync(OLD_TODO_FILE, 'utf8');
+    const todos = JSON.parse(data);
+    
+    // 按日期分组
+    const todosByDate = {};
+    todos.forEach(todo => {
+      const date = todo.date || new Date().toISOString().split('T')[0];
+      if (!todosByDate[date]) {
+        todosByDate[date] = [];
+      }
+      todosByDate[date].push(todo);
+    });
+    
+    // 保存到对应的日期文件
+    Object.keys(todosByDate).forEach(date => {
+      const filePath = getDateFilePath(date);
+      fs.writeFileSync(filePath, JSON.stringify(todosByDate[date], null, 2), 'utf8');
+    });
+    
+    // 备份旧文件
+    const backupPath = OLD_TODO_FILE + '.backup';
+    fs.renameSync(OLD_TODO_FILE, backupPath);
+    console.log(`✅ 已迁移旧数据，备份文件: ${backupPath}`);
   } catch (error) {
-    console.error('Error reading todos:', error.message);
-    return [];
+    console.error('❌ 迁移旧数据失败:', error.message);
   }
 }
 
-// 保存待办事项
+// 读取待办事项（合并所有日期文件）
+function loadTodos() {
+  // 首次运行时迁移旧数据
+  if (fs.existsSync(OLD_TODO_FILE)) {
+    migrateOldData();
+  }
+  
+  const allTodos = [];
+  
+  if (!fs.existsSync(TODO_DIR)) {
+    return [];
+  }
+  
+  try {
+    const files = fs.readdirSync(TODO_DIR);
+    const jsonFiles = files.filter(f => f.endsWith('.json'));
+    
+    jsonFiles.forEach(file => {
+      const filePath = path.join(TODO_DIR, file);
+      try {
+        const data = fs.readFileSync(filePath, 'utf8');
+        const todos = JSON.parse(data);
+        if (Array.isArray(todos)) {
+          allTodos.push(...todos);
+        }
+      } catch (error) {
+        console.error(`❌ 读取文件 ${file} 失败:`, error.message);
+      }
+    });
+  } catch (error) {
+    console.error('Error reading todos:', error.message);
+  }
+  
+  return allTodos;
+}
+
+// 保存待办事项（按日期分组保存）
 function saveTodos(todos) {
-  fs.writeFileSync(TODO_FILE, JSON.stringify(todos, null, 2), 'utf8');
+  // 按日期分组
+  const todosByDate = {};
+  todos.forEach(todo => {
+    // 使用 todo.date，如果没有则使用创建日期或当前日期
+    let dateKey;
+    if (todo.date) {
+      dateKey = todo.date.split('T')[0]; // 提取 YYYY-MM-DD
+    } else if (todo.created) {
+      dateKey = new Date(todo.created).toISOString().split('T')[0];
+    } else {
+      dateKey = new Date().toISOString().split('T')[0];
+    }
+    
+    if (!todosByDate[dateKey]) {
+      todosByDate[dateKey] = [];
+    }
+    todosByDate[dateKey].push(todo);
+  });
+  
+  // 保存到对应的日期文件
+  Object.keys(todosByDate).forEach(dateKey => {
+    const filePath = path.join(TODO_DIR, `${dateKey}.json`);
+    if (todosByDate[dateKey].length > 0) {
+      fs.writeFileSync(filePath, JSON.stringify(todosByDate[dateKey], null, 2), 'utf8');
+    } else {
+      // 如果该日期没有待办事项，删除文件
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+    }
+  });
+  
+  // 清理不再需要的文件（如果某个日期的所有 todo 都被删除了）
+  if (fs.existsSync(TODO_DIR)) {
+    const files = fs.readdirSync(TODO_DIR);
+    const jsonFiles = files.filter(f => f.endsWith('.json'));
+    const existingDates = Object.keys(todosByDate);
+    
+    jsonFiles.forEach(file => {
+      const dateKey = file.replace('.json', '');
+      if (!existingDates.includes(dateKey)) {
+        const filePath = path.join(TODO_DIR, file);
+        try {
+          fs.unlinkSync(filePath);
+        } catch (error) {
+          // 忽略错误
+        }
+      }
+    });
+  }
 }
 
 // 生成唯一 ID
@@ -56,41 +173,134 @@ function listTodos(filter = {}) {
   if (filter.project) {
     filtered = filtered.filter(t => t.project === filter.project);
   }
-  if (filter.process !== undefined) {
-    filtered = filtered.filter(t => t.process === filter.process);
+  if (filter.steps !== undefined) {
+    filtered = filtered.filter(t => t.steps === filter.steps);
+  }
+  if (filter.status) {
+    filtered = filtered.filter(t => t.status === filter.status);
   }
   if (filter.star) {
     filtered = filtered.filter(t => t.star === true);
   }
 
-  // 排序：星标优先，然后按创建时间
-  filtered.sort((a, b) => {
-    if (a.star && !b.star) return -1;
-    if (!a.star && b.star) return 1;
-    return new Date(b.created || 0) - new Date(a.created || 0);
+  // 按日期分组
+  const todosByDate = {};
+  filtered.forEach(todo => {
+    const dateKey = todo.date || new Date(todo.created || Date.now()).toISOString().split('T')[0];
+    if (!todosByDate[dateKey]) {
+      todosByDate[dateKey] = [];
+    }
+    todosByDate[dateKey].push(todo);
   });
 
-  console.log('\n📋 待办事项列表:\n');
-  filtered.forEach((todo, index) => {
-    const star = todo.star ? '⭐' : '  ';
-    const process = todo.process || 0;
-    const processBar = '█'.repeat(Math.floor(process / 10)) + '░'.repeat(10 - Math.floor(process / 10));
-    const end = todo.end ? `📅 ${formatDate(todo.end)}` : '';
-    const date = todo.date ? `🕐 ${todo.date}` : '';
-    const project = todo.project ? `#${todo.project}` : '';
-    
-    console.log(`${star} [${index + 1}] ${todo.name}`);
-    if (todo.description) {
-      console.log(`    ${todo.description}`);
+  // 按日期排序（最新的在前）
+  const sortedDates = Object.keys(todosByDate).sort((a, b) => b.localeCompare(a));
+
+  // 按项目分组（可选）
+  const todosByProject = {};
+  filtered.forEach(todo => {
+    const project = todo.project || '未分类';
+    if (!todosByProject[project]) {
+      todosByProject[project] = [];
     }
-    console.log(`    进度: ${processBar} ${process}% ${date} ${end} ${project}`);
-    console.log(`    ID: ${todo.id}`);
-    console.log('');
+    todosByProject[project].push(todo);
+  });
+
+  // Markdown 格式输出
+  console.log('\n# 📋 待办事项列表\n');
+
+  // 按日期分组展示
+  sortedDates.forEach(dateKey => {
+    const dateTodos = todosByDate[dateKey];
+    if (dateTodos.length === 0) return;
+
+    // 格式化日期标题
+    const dateObj = new Date(dateKey);
+    const dateTitle = dateObj.toLocaleDateString('zh-CN', { 
+      year: 'numeric', 
+      month: 'long', 
+      day: 'numeric',
+      weekday: 'long'
+    });
+    
+    console.log(`## ${dateTitle} (${dateKey})\n`);
+
+    // 按项目分组展示
+    const projectGroups = {};
+    dateTodos.forEach(todo => {
+      const project = todo.project || '未分类';
+      if (!projectGroups[project]) {
+        projectGroups[project] = [];
+      }
+      projectGroups[project].push(todo);
+    });
+
+    // 按项目排序（星标优先，然后按创建时间）
+    Object.keys(projectGroups).forEach(project => {
+      projectGroups[project].sort((a, b) => {
+        if (a.star && !b.star) return -1;
+        if (!a.star && b.star) return 1;
+        return new Date(b.created || 0) - new Date(a.created || 0);
+      });
+    });
+
+    // 输出项目分组
+    Object.keys(projectGroups).sort().forEach(project => {
+      const projectTodos = projectGroups[project];
+      if (projectTodos.length === 0) return;
+
+      console.log(`### ${project}\n`);
+
+      projectTodos.forEach((todo, index) => {
+        const star = todo.star ? '⭐ ' : '';
+        const status = todo.status ? `**[${todo.status}]** ` : '';
+        const end = todo.end ? `📅 ${formatDate(todo.end)} ` : '';
+        
+        // 主标题
+        console.log(`${index + 1}. ${star}${status}**${todo.name}**`);
+        
+        // 描述
+        if (todo.description) {
+          console.log(`   ${todo.description}`);
+        }
+        
+        // 步骤列表（兼容 steps 和 process 字段）
+        let steps = todo.steps;
+        // 如果 steps 不存在，尝试使用 process（如果是数组）
+        if (!steps && todo.process && Array.isArray(todo.process)) {
+          steps = todo.process;
+        }
+        // 只显示数组类型的步骤，不显示数字类型的进度
+        if (steps && Array.isArray(steps) && steps.length > 0) {
+          console.log(`   - 步骤:`);
+          steps.forEach((step) => {
+            console.log(`     - ${step}`);
+          });
+        }
+        
+        // 元信息
+        const meta = [];
+        if (end) meta.push(end.trim());
+        if (todo.id) meta.push(`ID: \`${todo.id}\``);
+        if (meta.length > 0) {
+          console.log(`   ${meta.join(' | ')}`);
+        }
+        
+        console.log('');
+      });
+    });
+
+    console.log('---\n');
   });
 }
 
 // 添加待办
-function addTodo(name, description = '', project = '', star = false, end = '', date = '') {
+function addTodo(name, description = '', project = '', star = false, end = '', date = '', status = '', steps = []) {
+  // 如果没有指定日期，使用当前日期
+  if (!date) {
+    date = new Date().toISOString().split('T')[0];
+  }
+  
   const todos = loadTodos();
   const newTodo = {
     id: generateId(),
@@ -98,9 +308,10 @@ function addTodo(name, description = '', project = '', star = false, end = '', d
     description,
     project,
     star: star === true || star === 'true',
-    process: 0,
+    steps: Array.isArray(steps) ? steps : (steps ? [steps] : []),
+    status: status || null,
     end: end || null,
-    date: date || null,
+    date: date,
     created: new Date().toISOString(),
     updated: new Date().toISOString()
   };
@@ -141,14 +352,14 @@ function removeTodo(id) {
 
 // 标记完成
 function doneTodo(id) {
-  updateTodo(id, { process: 100 });
+  updateTodo(id, { status: 'completed' });
 }
 
 // Git 提交
 function gitCommit(message) {
   try {
     const cwd = path.join(__dirname, '..');
-    execSync('git add todos.json', { cwd, stdio: 'inherit' });
+    execSync('git add todos/', { cwd, stdio: 'inherit' });
     execSync(`git commit -m "${message}"`, { cwd, stdio: 'inherit' });
     console.log('✅ 已提交到 Git');
   } catch (error) {
@@ -187,14 +398,20 @@ function main() {
     case 'list':
     case 'ls':
       const filter = {};
-      if (args[1] === '--project' && args[2]) {
-        filter.project = args[2];
-      }
-      if (args[1] === '--process' && args[2]) {
-        filter.process = parseInt(args[2]);
-      }
-      if (args[1] === '--star') {
-        filter.star = true;
+      let argIndex = 1;
+      while (argIndex < args.length) {
+        if (args[argIndex] === '--project' && args[argIndex + 1]) {
+          filter.project = args[argIndex + 1];
+          argIndex += 2;
+        } else if (args[argIndex] === '--status' && args[argIndex + 1]) {
+          filter.status = args[argIndex + 1];
+          argIndex += 2;
+        } else if (args[argIndex] === '--star') {
+          filter.star = true;
+          argIndex++;
+        } else {
+          argIndex++;
+        }
       }
       listTodos(filter);
       break;
@@ -202,7 +419,7 @@ function main() {
     case 'add':
       if (!args[1]) {
         console.error('❌ 请提供待办事项名称');
-        console.log('用法: todo add <name> [description] [--project <project>] [--star] [--date <date>] [--end <date>]');
+        console.log('用法: todo add <name> [description] [--project <project>] [--star] [--date <date>] [--end <date>] [--status <status>] [--steps <step1,step2,...>]');
         process.exit(1);
       }
       const name = args[1];
@@ -211,6 +428,8 @@ function main() {
       let star = false;
       let date = '';
       let end = '';
+      let status = '';
+      let steps = [];
       
       for (let i = 2; i < args.length; i++) {
         if (args[i] === '--project' && args[i + 1]) {
@@ -224,11 +443,17 @@ function main() {
         } else if (args[i] === '--end' && args[i + 1]) {
           end = args[i + 1];
           i++;
+        } else if (args[i] === '--status' && args[i + 1]) {
+          status = args[i + 1];
+          i++;
+        } else if (args[i] === '--steps' && args[i + 1]) {
+          steps = args[i + 1].split(',').map(s => s.trim());
+          i++;
         } else if (!description) {
           description = args[i];
         }
       }
-      addTodo(name, description, project, star, end, date);
+      addTodo(name, description, project, star, end, date, status, steps);
       break;
 
     case 'update':
@@ -248,8 +473,11 @@ function main() {
         } else if (args[i] === '--project' && args[i + 1]) {
           updates.project = args[i + 1];
           i++;
-        } else if (args[i] === '--process' && args[i + 1]) {
-          updates.process = parseInt(args[i + 1]);
+        } else if (args[i] === '--steps' && args[i + 1]) {
+          updates.steps = args[i + 1].split(',').map(s => s.trim());
+          i++;
+        } else if (args[i] === '--status' && args[i + 1]) {
+          updates.status = args[i + 1];
           i++;
         } else if (args[i] === '--star') {
           updates.star = true;
@@ -313,7 +541,7 @@ function main() {
 命令:
   list, ls                   显示所有待办事项
     --project <name>         按项目过滤
-    --process <number>       按进度过滤
+    --status <status>        按状态过滤
     --star                   只显示星标
 
   add <name>                 添加待办事项
@@ -322,18 +550,21 @@ function main() {
     --star                   标记为星标
     --date <date>            计划日期/时间
     --end <date>             截止日期
+    --status <status>        状态
+    --steps <step1,step2>    步骤列表（逗号分隔）
 
   update <id>                更新待办事项
     --name <name>            更新名称
     --desc <description>     更新描述
     --project <name>         更新项目
-    --process <number>       更新进度 (0-100)
+    --steps <step1,step2>    更新步骤列表（逗号分隔）
+    --status <status>        更新状态
     --star                   添加星标
     --unstar                 移除星标
     --date <date>            更新计划日期/时间
     --end <date>             更新截止日期
 
-  done <id>                  标记为完成 (进度 100%)
+  done <id>                  标记为完成 (status: completed)
 
   remove, rm <id>            删除待办事项
 
@@ -343,9 +574,12 @@ function main() {
   sync                       拉取 + 提交 + 推送
 
 示例:
-  todo add "完成项目文档" --project work --star
+  todo add "完成项目文档" --project work --star --status pending
+  todo add "重构代码" --steps "设计,编码,测试" --status in_progress
   todo list --star
-  todo update <id> --process 50
+  todo list --status pending
+  todo update <id> --steps "步骤1,步骤2,步骤3"
+  todo update <id> --status completed
   todo done <id>
   todo sync
       `);

@@ -5,8 +5,8 @@
     "description": "为 AI columns 添加语言支持功能",
     "star": false,
     "end": null,
-    "date": null,
-    "process": 0,
+    "date": "2025-12-16",
+    "steps": [],
     "project": "hangao"
   },
   {
@@ -15,8 +15,8 @@
     "description": "删除 web url 字段",
     "star": false,
     "end": null,
-    "date": null,
-    "process": 0,
+    "date": "2025-12-16",
+    "steps": [],
     "project": "hangao"
   },
   {
@@ -25,38 +25,58 @@
     "description": "为 additional search 和 prospect 添加语言绑定",
     "star": false,
     "end": null,
-    "date": null,
-    "process": 0,
+    "date": "2025-12-16",
+    "steps": [],
     "project": "hangao"
   },
   {
     "id": "4",
     "name": "测试",
     "description": "1. lead 导入（3条路径），展示\n2. 运行（3条路径）\n3. 导出",
-    "star": false,
-    "end": null,
-    "date": "13:30 - 14:00",
-    "process": 0,
+    "star": "13:30",
+    "end": "14:00",
+    "date": "2025-12-16",
+    "steps": ["lead 导入（3条路径），展示", "运行（3条路径）", "导出"],
     "project": "hangao"
   },
   {
     "id": "5",
     "name": "2w 条输出",
     "description": "1. 判断企业\n2. 字段归一化\n3. 导出结果",
-    "star": false,
-    "end": null,
-    "date": "14:00 - 15:00",
-    "process": 0,
+    "star": "14:00",
+    "end": "15:00",
+    "date": "2025-12-16",
+    "steps": ["判断企业", "字段归一化", "导出结果"],
     "project": "hangao"
   },
   {
     "id": "6",
     "name": "知识库",
     "description": "知识库相关任务",
-    "star": false,
-    "end": null,
-    "date": null,
-    "process": 0,
-    "project": "hangao"
+    "star": "",
+    "end": "",
+    "date": "2025-12-16",
+    "steps": [],
+    "project": "hang  ao"
+  },
+  {
+    "id": "7",
+    "name": "landing page",
+    "description": "landing page 相关任务",
+    "star": "",
+    "end": "",
+    "date": "2025-12-16",
+    "steps": [],
+    "project": "西湖大学"
+  },
+  {
+    "id": "8",
+    "name": "数量友好提示",
+    "description": "workspace 数量友好提示",
+    "star": "",
+    "end": "",
+    "date": "2025-12-16",
+    "steps": ["excel 批量导入", "star 数量提示", "export 数量提示（目前1w条）"],
+    "project": "西湖大学"
   }
 ]
