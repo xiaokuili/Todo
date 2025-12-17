@@ -162,39 +162,116 @@ function formatDate(date) {
 
 // ==================== 展示模块 ====================
 
-// 获取状态图标
-function getStatusIcon(todo) {
-  if (todo.status === 'completed' || todo.status === 'done') {
-    return '✅';
+// ANSI 颜色代码
+const colors = {
+  reset: '\x1b[0m',
+  bright: '\x1b[1m',
+  dim: '\x1b[2m',
+  red: '\x1b[31m',
+  green: '\x1b[32m',
+  yellow: '\x1b[33m',
+  blue: '\x1b[34m',
+  magenta: '\x1b[35m',
+  cyan: '\x1b[36m',
+  gray: '\x1b[90m',
+};
+
+// 获取状态颜色
+function getStatusColor(todo) {
+  const status = todo.status || 'pending';
+  if (status === 'completed' || status === 'done') {
+    return colors.green;
+  } else if (status === 'in_progress' || status === 'doing') {
+    return colors.yellow;
+  } else if (status === 'pending') {
+    return colors.cyan;
   }
-  return '⏳';
+  return colors.gray;
 }
 
-// 格式化时间显示
+// 获取状态文本
+function getStatusText(todo) {
+  const status = todo.status || 'pending';
+  if (status === 'completed' || status === 'done') {
+    return '✓';
+  } else if (status === 'in_progress' || status === 'doing') {
+    return '→';
+  } else if (status === 'pending') {
+    return '○';
+  }
+  return '?';
+}
+
+// 格式化时间显示（单行）
 function formatTimeDisplay(todo) {
+  const timeParts = [];
+  
+  // 日期
+  if (todo.date) {
+    const dateObj = new Date(todo.date);
+    const dateStr = dateObj.toLocaleDateString('zh-CN', { 
+      month: '2-digit', 
+      day: '2-digit'
+    });
+    timeParts.push(`📅 ${dateStr}`);
+  }
+  
+  // 开始和结束时间
   if (todo.start && todo.end) {
     const timePattern = /^\d{1,2}:\d{2}$/;
     if (timePattern.test(todo.start) && timePattern.test(todo.end)) {
-      return `🕐 ${todo.start} - ${todo.end}`;
+      timeParts.push(`🕐 ${todo.start}-${todo.end}`);
     } else {
       const startDate = todo.start ? formatDate(todo.start) : '';
       const endDate = todo.end ? formatDate(todo.end) : '';
-      return startDate && endDate ? `📅 ${startDate} - ${endDate}` : (endDate ? `📅 ${endDate}` : '');
+      if (startDate && endDate) {
+        timeParts.push(`📅 ${startDate}-${endDate}`);
+      } else if (endDate) {
+        timeParts.push(`📅 ${endDate}`);
+      }
     }
   } else if (todo.end) {
     const timePattern = /^\d{1,2}:\d{2}$/;
     if (timePattern.test(todo.end)) {
-      return `🕐 ${todo.end}`;
+      timeParts.push(`🕐 ${todo.end}`);
+    } else {
+      timeParts.push(`📅 ${formatDate(todo.end)}`);
     }
-    return `📅 ${formatDate(todo.end)}`;
   } else if (todo.start) {
     const timePattern = /^\d{1,2}:\d{2}$/;
     if (timePattern.test(todo.start)) {
-      return `🕐 ${todo.start}`;
+      timeParts.push(`🕐 ${todo.start}`);
+    } else {
+      timeParts.push(`📅 ${formatDate(todo.start)}`);
     }
-    return `📅 ${formatDate(todo.start)}`;
   }
-  return '';
+  
+  // 更新时间
+  if (todo.updated) {
+    const updatedDate = new Date(todo.updated);
+    const now = new Date();
+    const diffMs = now - updatedDate;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+    
+    let updatedStr = '';
+    if (diffMins < 60) {
+      updatedStr = `${diffMins}分钟前`;
+    } else if (diffHours < 24) {
+      updatedStr = `${diffHours}小时前`;
+    } else if (diffDays < 7) {
+      updatedStr = `${diffDays}天前`;
+    } else {
+      updatedStr = updatedDate.toLocaleDateString('zh-CN', { 
+        month: '2-digit', 
+        day: '2-digit'
+      });
+    }
+    timeParts.push(`🔄 ${updatedStr}`);
+  }
+  
+  return timeParts.length > 0 ? timeParts.join('  ') : '';
 }
 
 // 格式化步骤显示
@@ -211,51 +288,24 @@ function formatStepsDisplay(todo) {
 
 // 显示单个待办事项
 function displayTodo(todo, index) {
-  const statusIcon = getStatusIcon(todo);
+  const statusColor = getStatusColor(todo);
+  const statusText = getStatusText(todo);
   const timeDisplay = formatTimeDisplay(todo);
-  const stepsDisplay = formatStepsDisplay(todo);
   const project = todo.project ? `#${todo.project}` : '';
+  const id = todo.id || '';
   
-  // 编号和标题
-  console.log(`  [${index}] ${statusIcon} ${todo.name}`);
+  // 第一行：id title project（带状态颜色）
+  const statusDisplay = `${statusColor}${statusText}${colors.reset}`;
+  const titleParts = [];
+  if (id) titleParts.push(`[${id}]`);
+  titleParts.push(todo.name);
+  if (project) titleParts.push(project);
   
-  // 检查是否有步骤数组
-  const hasStepsArray = todo.steps && Array.isArray(todo.steps) && todo.steps.length > 0;
+  console.log(`  ${statusDisplay} ${titleParts.join(' ')}`);
   
-  // 描述处理
-  if (todo.description) {
-    const descLines = todo.description.split('\n');
-    // 检查描述是否全是步骤格式（数字开头的行）
-    const allStepFormat = descLines.every(line => {
-      const trimmed = line.trim();
-      return !trimmed || /^\d+\.\s/.test(trimmed);
-    });
-    
-    // 如果描述全是步骤格式，且有步骤数组，则跳过描述显示（避免重复）
-    // 否则显示描述
-    if (!allStepFormat || !hasStepsArray) {
-      descLines.forEach(line => {
-        const trimmed = line.trim();
-        if (trimmed) {
-          console.log(`    ${trimmed}`);
-        }
-      });
-    }
-  }
-  
-  // 步骤（如果有步骤数组，显示步骤数组；否则不显示，因为已经在描述中显示了）
-  if (stepsDisplay) {
-    console.log(stepsDisplay);
-  }
-  
-  // 元信息行：时间、项目、ID
-  const metaParts = [];
-  if (timeDisplay) metaParts.push(timeDisplay);
-  if (project) metaParts.push(project);
-  if (todo.id) metaParts.push(`ID: ${todo.id}`);
-  
-  if (metaParts.length > 0) {
-    console.log(`    ${metaParts.join('  ')}`);
+  // 第二行：时间信息
+  if (timeDisplay) {
+    console.log(`    ${colors.dim}${timeDisplay}${colors.reset}`);
   }
   
   console.log(''); // 空行分隔
@@ -268,9 +318,16 @@ function displayTodosList(todos) {
     return;
   }
   
+  // 按 updated 排序（最新的在前），如果没有 updated 则使用 created
+  const sortedTodos = [...todos].sort((a, b) => {
+    const aTime = a.updated ? new Date(a.updated).getTime() : (a.created ? new Date(a.created).getTime() : 0);
+    const bTime = b.updated ? new Date(b.updated).getTime() : (b.created ? new Date(b.created).getTime() : 0);
+    return bTime - aTime;
+  });
+  
   console.log('📋 待办事项列表:\n');
   
-  todos.forEach((todo, index) => {
+  sortedTodos.forEach((todo, index) => {
     displayTodo(todo, index + 1);
   });
 }
@@ -326,8 +383,11 @@ function displayTodosGrouped(todos) {
     let globalIndex = 1;
     Object.keys(projectGroups).sort().forEach(project => {
       const projectTodos = projectGroups[project];
+      // 按 updated 排序（最新的在前）
       projectTodos.sort((a, b) => {
-        return new Date(b.created || 0) - new Date(a.created || 0);
+        const aUpdated = a.updated ? new Date(a.updated).getTime() : (a.created ? new Date(a.created).getTime() : 0);
+        const bUpdated = b.updated ? new Date(b.updated).getTime() : (b.created ? new Date(b.created).getTime() : 0);
+        return bUpdated - aUpdated;
       });
       
       projectTodos.forEach(todo => {
@@ -544,11 +604,19 @@ function main() {
       break;
 
     case 'add':
-      if (!args[1]) {
-        console.error('❌ 请提供待办事项名称');
-        console.log('用法: todo add <name> [description] [--project <project>] [--start <time>] [--end <time>] [--date <date>] [--status <status>] [--steps <step1,step2,...>]');
-        process.exit(1);
+      // 如果没有参数，进入交互式模式
+      if (args.length === 1) {
+        addTodoInteractive();
+        break;
       }
+      
+      // 如果只有一个参数（名称），快速添加
+      if (args.length === 2) {
+        addTodo(args[1], '', '', '', '', '', '', []);
+        break;
+      }
+      
+      // 完整参数模式
       const name = args[1];
       let description = '';
       let project = '';
@@ -577,6 +645,9 @@ function main() {
         } else if (args[i] === '--steps' && args[i + 1]) {
           steps = args[i + 1].split(',').map(s => s.trim());
           i++;
+        } else if (args[i] === '--interactive' || args[i] === '-i') {
+          addTodoInteractive();
+          return;
         } else if (!description) {
           description = args[i];
         }
@@ -670,7 +741,9 @@ function main() {
     --project <name>         按项目过滤
     --status <status>        按状态过滤
 
-  add <name>                 添加待办事项
+  add [name]                 添加待办事项
+    无参数                   交互式添加（推荐）
+    仅名称                   快速添加（只输入名称）
     [description]            描述
     --project <name>         项目名称
     --start <time>           开始时间（HH:MM 或日期）
@@ -678,6 +751,7 @@ function main() {
     --date <date>            计划日期
     --status <status>        状态
     --steps <step1,step2>    步骤列表（逗号分隔）
+    -i, --interactive        交互式模式
 
   update <id>                更新待办事项
     --name <name>            更新名称
@@ -699,8 +773,10 @@ function main() {
   sync                       拉取 + 提交 + 推送
 
 示例:
-  todo add "完成项目文档" --project work --start "09:00" --end "12:00" --status pending
-  todo add "重构代码" --steps "设计,编码,测试" --status in_progress
+  todo add                    # 交互式添加（最简单）
+  todo add "完成项目文档"      # 快速添加（只输入名称）
+  todo add "完成项目文档" --project work --start "09:00" --end "12:00"
+  todo add "重构代码" --steps "设计,编码,测试"
   todo list --status pending
   todo update <id> --steps "步骤1,步骤2,步骤3"
   todo update <id> --status completed
