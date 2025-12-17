@@ -179,9 +179,6 @@ function listTodos(filter = {}) {
   if (filter.status) {
     filtered = filtered.filter(t => t.status === filter.status);
   }
-  if (filter.star) {
-    filtered = filtered.filter(t => t.star === true);
-  }
 
   // 按日期分组
   const todosByDate = {};
@@ -235,11 +232,9 @@ function listTodos(filter = {}) {
       projectGroups[project].push(todo);
     });
 
-    // 按项目排序（星标优先，然后按创建时间）
+    // 按创建时间排序
     Object.keys(projectGroups).forEach(project => {
       projectGroups[project].sort((a, b) => {
-        if (a.star && !b.star) return -1;
-        if (!a.star && b.star) return 1;
         return new Date(b.created || 0) - new Date(a.created || 0);
       });
     });
@@ -252,12 +247,40 @@ function listTodos(filter = {}) {
       console.log(`### ${project}\n`);
 
       projectTodos.forEach((todo, index) => {
-        const star = todo.star ? '⭐ ' : '';
-        const status = todo.status ? `**[${todo.status}]** ` : '';
-        const end = todo.end ? `📅 ${formatDate(todo.end)} ` : '';
+        // 状态显示：只显示做完/没做完
+        let statusDisplay = '';
+        if (todo.status === 'completed' || todo.status === 'done') {
+          statusDisplay = '✅ ';
+        } else {
+          statusDisplay = '⏳ ';
+        }
+        
+        // 处理时间显示
+        let timeDisplay = '';
+        if (todo.start && todo.end) {
+          // 如果 start 和 end 都是时间格式（HH:MM），显示时间范围
+          const timePattern = /^\d{1,2}:\d{2}$/;
+          if (timePattern.test(todo.start) && timePattern.test(todo.end)) {
+            timeDisplay = `🕐 ${todo.start} - ${todo.end} `;
+          } else {
+            // 否则作为日期处理
+            const startDate = todo.start ? `📅 ${formatDate(todo.start)} ` : '';
+            const endDate = todo.end ? `📅 ${formatDate(todo.end)} ` : '';
+            timeDisplay = startDate + endDate;
+          }
+        } else if (todo.end) {
+          timeDisplay = `📅 ${formatDate(todo.end)} `;
+        } else if (todo.start) {
+          const timePattern = /^\d{1,2}:\d{2}$/;
+          if (timePattern.test(todo.start)) {
+            timeDisplay = `🕐 ${todo.start} `;
+          } else {
+            timeDisplay = `📅 ${formatDate(todo.start)} `;
+          }
+        }
         
         // 主标题
-        console.log(`${index + 1}. ${star}${status}**${todo.name}**`);
+        console.log(`${index + 1}. ${statusDisplay}**${todo.name}**`);
         
         // 描述
         if (todo.description) {
@@ -280,7 +303,7 @@ function listTodos(filter = {}) {
         
         // 元信息
         const meta = [];
-        if (end) meta.push(end.trim());
+        if (timeDisplay) meta.push(timeDisplay.trim());
         if (todo.id) meta.push(`ID: \`${todo.id}\``);
         if (meta.length > 0) {
           console.log(`   ${meta.join(' | ')}`);
@@ -295,7 +318,7 @@ function listTodos(filter = {}) {
 }
 
 // 添加待办
-function addTodo(name, description = '', project = '', star = false, end = '', date = '', status = '', steps = []) {
+function addTodo(name, description = '', project = '', start = '', end = '', date = '', status = '', steps = []) {
   // 如果没有指定日期，使用当前日期
   if (!date) {
     date = new Date().toISOString().split('T')[0];
@@ -307,7 +330,7 @@ function addTodo(name, description = '', project = '', star = false, end = '', d
     name,
     description,
     project,
-    star: star === true || star === 'true',
+    start: start || null,
     steps: Array.isArray(steps) ? steps : (steps ? [steps] : []),
     status: status || null,
     end: end || null,
@@ -406,9 +429,6 @@ function main() {
         } else if (args[argIndex] === '--status' && args[argIndex + 1]) {
           filter.status = args[argIndex + 1];
           argIndex += 2;
-        } else if (args[argIndex] === '--star') {
-          filter.star = true;
-          argIndex++;
         } else {
           argIndex++;
         }
@@ -419,13 +439,13 @@ function main() {
     case 'add':
       if (!args[1]) {
         console.error('❌ 请提供待办事项名称');
-        console.log('用法: todo add <name> [description] [--project <project>] [--star] [--date <date>] [--end <date>] [--status <status>] [--steps <step1,step2,...>]');
+        console.log('用法: todo add <name> [description] [--project <project>] [--start <time>] [--end <time>] [--date <date>] [--status <status>] [--steps <step1,step2,...>]');
         process.exit(1);
       }
       const name = args[1];
       let description = '';
       let project = '';
-      let star = false;
+      let start = '';
       let date = '';
       let end = '';
       let status = '';
@@ -435,8 +455,9 @@ function main() {
         if (args[i] === '--project' && args[i + 1]) {
           project = args[i + 1];
           i++;
-        } else if (args[i] === '--star') {
-          star = true;
+        } else if (args[i] === '--start' && args[i + 1]) {
+          start = args[i + 1];
+          i++;
         } else if (args[i] === '--date' && args[i + 1]) {
           date = args[i + 1];
           i++;
@@ -453,7 +474,7 @@ function main() {
           description = args[i];
         }
       }
-      addTodo(name, description, project, star, end, date, status, steps);
+      addTodo(name, description, project, start, end, date, status, steps);
       break;
 
     case 'update':
@@ -479,10 +500,9 @@ function main() {
         } else if (args[i] === '--status' && args[i + 1]) {
           updates.status = args[i + 1];
           i++;
-        } else if (args[i] === '--star') {
-          updates.star = true;
-        } else if (args[i] === '--unstar') {
-          updates.star = false;
+        } else if (args[i] === '--start' && args[i + 1]) {
+          updates.start = args[i + 1];
+          i++;
         } else if (args[i] === '--date' && args[i + 1]) {
           updates.date = args[i + 1];
           i++;
@@ -542,14 +562,13 @@ function main() {
   list, ls                   显示所有待办事项
     --project <name>         按项目过滤
     --status <status>        按状态过滤
-    --star                   只显示星标
 
   add <name>                 添加待办事项
     [description]            描述
     --project <name>         项目名称
-    --star                   标记为星标
-    --date <date>            计划日期/时间
-    --end <date>             截止日期
+    --start <time>           开始时间（HH:MM 或日期）
+    --end <time>             结束时间（HH:MM 或日期）
+    --date <date>            计划日期
     --status <status>        状态
     --steps <step1,step2>    步骤列表（逗号分隔）
 
@@ -559,10 +578,9 @@ function main() {
     --project <name>         更新项目
     --steps <step1,step2>    更新步骤列表（逗号分隔）
     --status <status>        更新状态
-    --star                   添加星标
-    --unstar                 移除星标
-    --date <date>            更新计划日期/时间
-    --end <date>             更新截止日期
+    --start <time>           更新开始时间
+    --end <time>             更新结束时间
+    --date <date>            更新计划日期
 
   done <id>                  标记为完成 (status: completed)
 
@@ -574,12 +592,12 @@ function main() {
   sync                       拉取 + 提交 + 推送
 
 示例:
-  todo add "完成项目文档" --project work --star --status pending
+  todo add "完成项目文档" --project work --start "09:00" --end "12:00" --status pending
   todo add "重构代码" --steps "设计,编码,测试" --status in_progress
-  todo list --star
   todo list --status pending
   todo update <id> --steps "步骤1,步骤2,步骤3"
   todo update <id> --status completed
+  todo update <id> --start "13:30" --end "14:00"
   todo done <id>
   todo sync
       `);
