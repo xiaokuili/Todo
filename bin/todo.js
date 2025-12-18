@@ -295,14 +295,28 @@ function formatTimeDisplay(todo) {
   return timeParts.length > 0 ? timeParts.join(' ') : '';
 }
 
-// 格式化步骤显示
+// 格式化步骤显示（Markdown todo 格式）
 function formatStepsDisplay(todo) {
   let steps = todo.steps;
   if (!steps && todo.process && Array.isArray(todo.process)) {
     steps = todo.process;
   }
   if (steps && Array.isArray(steps) && steps.length > 0) {
-    return steps.map((step, index) => `    ${index + 1}. ${step}`).join('\n');
+    // 清理步骤：去掉已有的编号，统一用 Markdown todo 格式
+    const cleanedSteps = steps.map((step) => {
+      const trimmed = step.trim();
+      // 如果步骤已经以数字开头（如 "1. xxx"），去掉编号部分
+      const match = trimmed.match(/^\d+\.\s*(.+)$/);
+      if (match) {
+        return match[1]; // 只保留内容部分
+      }
+      return trimmed;
+    });
+    
+    // 用 Markdown todo 格式显示：每行一个，使用 - [ ] 格式
+    return cleanedSteps.map((step) => 
+      `${colors.dim}- [ ] ${step}${colors.reset}`
+    ).join('\n');
   }
   return null;
 }
@@ -313,6 +327,7 @@ function displayTodo(todo, index) {
   const statusText = getStatusText(todo);
   const timeDisplay = formatTimeDisplay(todo);
   const project = todo.project ? `${colors.magenta}#${todo.project}${colors.reset}` : '';
+  const stepsDisplay = formatStepsDisplay(todo);
   
   // 状态图标（带颜色，加粗）
   const statusDisplay = `${statusColor}${colors.bright}${statusText}${colors.reset}`;
@@ -331,6 +346,14 @@ function displayTodo(todo, index) {
     console.log(`  ${mainParts.join(' ')}  ${timeDisplay}`);
   } else {
     console.log(`  ${mainParts.join(' ')}`);
+  }
+  
+  // 如果有步骤，显示在下一行
+  if (stepsDisplay) {
+    const lines = stepsDisplay.split('\n');
+    lines.forEach(line => {
+      console.log(`    ${line}`);
+    });
   }
   
   console.log(''); // 空行分隔
