@@ -167,6 +167,7 @@ const colors = {
   reset: '\x1b[0m',
   bright: '\x1b[1m',
   dim: '\x1b[2m',
+  strikethrough: '\x1b[9m', // 删除线
   red: '\x1b[31m',
   green: '\x1b[32m',
   yellow: '\x1b[33m',
@@ -295,28 +296,37 @@ function formatTimeDisplay(todo) {
   return timeParts.length > 0 ? timeParts.join(' ') : '';
 }
 
-// 格式化步骤显示（Markdown todo 格式）
+// 格式化步骤显示（直接展示用户输入的 Markdown todo 格式）
 function formatStepsDisplay(todo) {
   let steps = todo.steps;
   if (!steps && todo.process && Array.isArray(todo.process)) {
     steps = todo.process;
   }
   if (steps && Array.isArray(steps) && steps.length > 0) {
-    // 清理步骤：去掉已有的编号，统一用 Markdown todo 格式
-    const cleanedSteps = steps.map((step) => {
+    // 直接展示用户输入的格式
+    // 如果步骤已经是 Markdown todo 格式（包含 [] 或 [x]），直接使用
+    // [x] 格式表示已完成，需要添加删除线效果
+    return steps.map((step) => {
       const trimmed = step.trim();
-      // 如果步骤已经以数字开头（如 "1. xxx"），去掉编号部分
+      // 如果已经是 Markdown todo 格式（以 []、[ ] 或 [x] 开头）
+      if (/^\[[ x]?\]/.test(trimmed)) {
+        // 检查是否是已完成状态 [x]
+        if (/^\[x\]/.test(trimmed)) {
+          // 已完成：添加删除线效果
+          return `${colors.dim}- ${colors.strikethrough}${trimmed}${colors.reset}`;
+        } else {
+          // 未完成：正常显示
+          return `${colors.dim}- ${trimmed}${colors.reset}`;
+        }
+      }
+      // 如果以数字开头（如 "1. xxx"），去掉编号，转换为 todo 格式
       const match = trimmed.match(/^\d+\.\s*(.+)$/);
       if (match) {
-        return match[1]; // 只保留内容部分
+        return `${colors.dim}- [ ] ${match[1]}${colors.reset}`;
       }
-      return trimmed;
-    });
-    
-    // 用 Markdown todo 格式显示：每行一个，使用 - [ ] 格式
-    return cleanedSteps.map((step) => 
-      `${colors.dim}- [ ] ${step}${colors.reset}`
-    ).join('\n');
+      // 其他情况，直接添加 todo 格式
+      return `${colors.dim}- [ ] ${trimmed}${colors.reset}`;
+    }).join('\n');
   }
   return null;
 }
