@@ -585,7 +585,12 @@ function gitPull() {
 // 主函数
 function main() {
   const args = process.argv.slice(2);
-  const command = args[0];
+  let command = args[0];
+
+  // 如果没有提供命令，显示帮助信息
+  if (!command) {
+    command = 'help';
+  }
 
   switch (command) {
     case 'list':
