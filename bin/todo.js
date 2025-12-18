@@ -403,12 +403,18 @@ function displayTodosGrouped(todos) {
   });
 }
 
-// 显示待办列表
+// 显示待办列表（只显示当天的）
 function listTodos(filter = {}) {
   const todos = loadTodos();
   
-  // 过滤
-  let filtered = todos;
+  // 只显示当天的待办
+  const today = new Date().toISOString().split('T')[0];
+  let filtered = todos.filter(t => {
+    const todoDate = t.date || (t.created ? new Date(t.created).toISOString().split('T')[0] : today);
+    return todoDate === today;
+  });
+  
+  // 应用其他过滤条件
   if (filter.project) {
     filtered = filtered.filter(t => t.project === filter.project);
   }
@@ -419,12 +425,8 @@ function listTodos(filter = {}) {
     filtered = filtered.filter(t => t.status === filter.status);
   }
   
-  // 如果没有过滤条件，使用分组显示；否则使用简洁列表
-  if (Object.keys(filter).length === 0) {
-    displayTodosGrouped(filtered);
-  } else {
-    displayTodosList(filtered);
-  }
+  // 使用简洁列表显示
+  displayTodosList(filtered);
 }
 
 // 添加待办
@@ -582,6 +584,61 @@ function gitPull() {
   }
 }
 
+// 获取当前日期的文件路径
+function getCurrentDateFile() {
+  const today = new Date();
+  const dateKey = today.toISOString().split('T')[0];
+  return path.join(TODO_DIR, `${dateKey}.json`);
+}
+
+// 打开/查看当前文件
+function openCurrentFile() {
+  const filePath = getCurrentDateFile();
+  const absolutePath = path.resolve(filePath);
+  
+  console.log(`📂 当前文件路径: ${absolutePath}\n`);
+  
+  // 检查文件是否存在
+  if (!fs.existsSync(filePath)) {
+    console.log('📝 文件不存在，将创建新文件');
+    // 创建空数组文件
+    fs.writeFileSync(filePath, '[]\n', 'utf8');
+  }
+  
+  // 显示文件内容
+  try {
+    const content = fs.readFileSync(filePath, 'utf8');
+    console.log('📄 文件内容:');
+    console.log(content);
+  } catch (error) {
+    console.error('❌ 读取文件失败:', error.message);
+    return;
+  }
+  
+  // 尝试用系统默认编辑器打开
+  const platform = process.platform;
+  let command;
+  
+  try {
+    if (platform === 'darwin') {
+      // macOS
+      command = `open "${absolutePath}"`;
+    } else if (platform === 'win32') {
+      // Windows
+      command = `start "" "${absolutePath}"`;
+    } else {
+      // Linux
+      command = `xdg-open "${absolutePath}"`;
+    }
+    console.log(`\n💡 提示: 可以直接编辑文件，然后使用 "todo commit" 提交更改`);
+    console.log(`\n🔧 正在打开文件...`);
+    execSync(command, { stdio: 'inherit' });
+  } catch (error) {
+    console.log(`\n💡 提示: 可以手动打开文件: ${absolutePath}`);
+    console.log(`   编辑后使用 "todo commit" 提交更改`);
+  }
+}
+
 // 主函数
 function main() {
   const args = process.argv.slice(2);
@@ -612,125 +669,27 @@ function main() {
       break;
 
     case 'add':
-      // 如果没有参数，进入交互式模式
-      if (args.length === 1) {
-        addTodoInteractive();
-        break;
-      }
-      
-      // 如果只有一个参数（名称），快速添加
-      if (args.length === 2) {
-        addTodo(args[1], '', '', '', '', '', '', []);
-        break;
-      }
-      
-      // 完整参数模式
-      const name = args[1];
-      let project = '';
-      let start = '';
-      let date = '';
-      let end = '';
-      let status = '';
-      let steps = [];
-      
-      for (let i = 2; i < args.length; i++) {
-        if (args[i] === '--project' && args[i + 1]) {
-          project = args[i + 1];
-          i++;
-        } else if (args[i] === '--start' && args[i + 1]) {
-          start = args[i + 1];
-          i++;
-        } else if (args[i] === '--date' && args[i + 1]) {
-          date = args[i + 1];
-          i++;
-        } else if (args[i] === '--end' && args[i + 1]) {
-          end = args[i + 1];
-          i++;
-        } else if (args[i] === '--status' && args[i + 1]) {
-          status = args[i + 1];
-          i++;
-        } else if (args[i] === '--steps' && args[i + 1]) {
-          steps = args[i + 1].split(',').map(s => s.trim());
-          i++;
-        } else if (args[i] === '--interactive' || args[i] === '-i') {
-          addTodoInteractive();
-          return;
-        }
-      }
-      addTodo(name, '', project, start, end, date, status, steps);
-      break;
-
-    case 'update':
-      if (!args[1]) {
-        console.error('❌ 请提供待办事项 ID');
+      // 简化：只接受名称参数
+      if (args.length < 2) {
+        console.error('❌ 请提供任务名称');
+        console.log('用法: todo add "任务名称"');
         process.exit(1);
       }
-      const id = args[1];
-      const updates = {};
-      for (let i = 2; i < args.length; i++) {
-        if (args[i] === '--name' && args[i + 1]) {
-          updates.name = args[i + 1];
-          i++;
-        } else if (args[i] === '--desc' && args[i + 1]) {
-          updates.description = args[i + 1];
-          i++;
-        } else if (args[i] === '--project' && args[i + 1]) {
-          updates.project = args[i + 1];
-          i++;
-        } else if (args[i] === '--steps' && args[i + 1]) {
-          updates.steps = args[i + 1].split(',').map(s => s.trim());
-          i++;
-        } else if (args[i] === '--status' && args[i + 1]) {
-          updates.status = args[i + 1];
-          i++;
-        } else if (args[i] === '--start' && args[i + 1]) {
-          updates.start = args[i + 1];
-          i++;
-        } else if (args[i] === '--date' && args[i + 1]) {
-          updates.date = args[i + 1];
-          i++;
-        } else if (args[i] === '--end' && args[i + 1]) {
-          updates.end = args[i + 1];
-          i++;
-        }
-      }
-      updateTodo(id, updates);
-      break;
-
-    case 'done':
-      if (!args[1]) {
-        console.error('❌ 请提供待办事项 ID');
-        process.exit(1);
-      }
-      doneTodo(args[1]);
-      break;
-
-    case 'remove':
-    case 'rm':
-      if (!args[1]) {
-        console.error('❌ 请提供待办事项 ID');
-        process.exit(1);
-      }
-      removeTodo(args[1]);
-      break;
-
-    case 'commit':
-      const message = args[1] || 'Update todos';
-      gitCommit(message);
-      break;
-
-    case 'push':
-      gitPush();
-      break;
-
-    case 'pull':
-      gitPull();
+      // 合并所有参数作为任务名称（支持带空格的任务名）
+      const name = args.slice(1).join(' ');
+      addTodo(name, '', '', '', '', '', '', []);
       break;
 
     case 'sync':
+      // 同步：拉取 + 提交 + 推送
       gitPull();
       gitCommit('Update todos');
       gitPush();
+      break;
+
+    case 'open':
+    case 'file':
+      openCurrentFile();
       break;
 
     case 'help':
@@ -742,51 +701,22 @@ function main() {
 用法: todo <command> [options]
 
 命令:
-  list, ls                   显示所有待办事项
+  list, ls                   显示当天的待办事项
     --project <name>         按项目过滤
     --status <status>        按状态过滤
 
-  add [name]                 添加待办事项
-    无参数                   交互式添加（推荐）
-    仅名称                   快速添加（只输入名称）
-    --project <name>         项目名称
-    --start <time>           开始时间（HH:MM 或日期）
-    --end <time>             结束时间（HH:MM 或日期）
-    --date <date>            计划日期
-    --status <status>        状态
-    --steps <step1,step2>    步骤列表（逗号分隔）
-    -i, --interactive        交互式模式
+  add <name>                 添加待办事项（简化版，只接受任务名称）
 
-  update <id>                更新待办事项
-    --name <name>            更新名称
-    --desc <description>     更新描述
-    --project <name>         更新项目
-    --steps <step1,step2>    更新步骤列表（逗号分隔）
-    --status <status>        更新状态
-    --start <time>           更新开始时间
-    --end <time>             更新结束时间
-    --date <date>            更新计划日期
+  open, file                 打开/查看当前日期的待办文件（用于复杂编辑）
 
-  done <id>                  标记为完成 (status: completed)
-
-  remove, rm <id>            删除待办事项
-
-  commit [message]           提交更改到 Git
-  push                       推送到远程仓库
-  pull                       从远程仓库拉取
-  sync                       拉取 + 提交 + 推送
+  sync                       同步（拉取 + 提交 + 推送）
 
 示例:
-  todo add                    # 交互式添加（最简单）
-  todo add "完成项目文档"      # 快速添加（只输入名称）
-  todo add "完成项目文档" --project work --start "09:00" --end "12:00"
-  todo add "重构代码" --steps "设计,编码,测试"
-  todo list --status pending
-  todo update <id> --steps "步骤1,步骤2,步骤3"
-  todo update <id> --status completed
-  todo update <id> --start "13:30" --end "14:00"
-  todo done <id>
-  todo sync
+  todo add "完成项目文档"      # 快速添加任务
+  todo list                    # 查看当天的待办
+  todo list --status pending   # 按状态过滤
+  todo open                    # 打开当前日期的文件进行编辑
+  todo sync                    # 同步（拉取+提交+推送）
       `);
       break;
 
