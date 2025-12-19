@@ -2,7 +2,8 @@
 有条理的做某些事，并且AI助力
 
 ## Feature
-1. global todolist， and easy read and write 
+1. global todolist， and easy read and write
+2. Web 界面：按时间维度展示和编辑待办事项 
 
 ## Model
 - Todo  
@@ -41,6 +42,26 @@ git remote add origin https://github.com/xiaokuili/Todo # 可选：GitHub/GitLab
 ```
 
 ## 使用方法
+
+### Web 界面（推荐）
+
+启动 Web 服务器：
+
+```bash
+cd todo
+npm start
+```
+
+然后在浏览器中打开 `http://localhost:3000`
+
+**功能特点：**
+- 📅 按日期分组展示所有待办事项
+- ⏰ 方便设置开始时间和结束时间
+- ✏️ 可视化编辑所有字段（名称、日期、时间、项目、状态、描述、步骤）
+- 🎨 现代化的界面设计
+- 📱 响应式设计，支持移动端
+
+### 命令行界面
 
 ### 基本命令
 

@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>📋 Todo 管理</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- 引入 Lucide 图标 -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    body { background: #f8fafc; color: #1e293b; }
+    .calendar-day.active { background: #1e293b; color: white; }
+    .calendar-day.has-todo::after { content: ''; position: absolute; bottom: 4px; left: 50%; transform: translateX(-50%); width: 4px; height: 4px; background: #3b82f6; border-radius: 50%; }
+    .custom-scrollbar::-webkit-scrollbar { width: 4px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 10px; }
+  </style>
+</head>
+<body class="min-h-screen">
+  <div class="max-w-6xl mx-auto flex flex-col md:flex-row gap-6 p-4 md:p-8">
+    
+    <!-- 左侧：筛选模块 (日历) -->
+    <aside class="w-full md:w-80 flex-shrink-0">
+      <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 sticky top-8">
+        <div class="flex items-center justify-between mb-6">
+          <h2 class="text-lg font-bold flex items-center gap-2">
+            <i data-lucide="calendar"></i> 日历
+          </h2>
+          <button onclick="clearFilter()" class="text-xs text-slate-400 hover:text-slate-600">清除</button>
+        </div>
+        
+        <!-- 迷你日历实现 -->
+        <div id="calendar-root"></div>
+        
+        <div class="mt-8">
+          <button 
+            onclick="addNewTodo()" 
+            class="w-full bg-slate-900 text-white py-3 rounded-xl font-medium hover:bg-slate-800 transition-all flex items-center justify-center gap-2 shadow-sm">
+            <i data-lucide="plus" class="w-4 h-4"></i> 新建任务
+          </button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- 右侧：TodoList 展示模块 -->
+    <main class="flex-1 min-w-0">
+      <header class="mb-6">
+        <h1 id="list-title" class="text-2xl font-extrabold text-slate-900">所有待办</h1>
+        <p id="list-subtitle" class="text-sm text-slate-500 mt-1">记录你的每一天</p>
+      </header>
+
+      <div id="todos-container" class="space-y-4">
+        <!-- 内容由 todo.js 渲染 -->
+      </div>
+    </main>
+  </div>
+
+  <!-- 引入模块化脚本 -->
+  <script type="module">
+    import { initApp } from './js/app.js';
+    window.addEventListener('DOMContentLoaded', initApp);
+  </script>
+</body>
+</html>

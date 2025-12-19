@@ -1,0 +1,91 @@
+[
+  {
+    "id": "mjc63l4d9aa05gv8aor",
+    "name": "fix_ipc_bug",
+    "description": "",
+    "project": "",
+    "start": "5:00",
+    "steps": [
+      "[X] 定位错误, 采集还是组包",
+      "[X] 确定方案",
+      "[] 开发",
+      "[] 测试",
+      "[] 上线"
+    ],
+    "status": null,
+    "end": "6: 00",
+    "date": "2025-12-19",
+    "created": "2025-12-19T01:05:13.645Z",
+    "updated": "2025-12-19T01:05:13.645Z"
+  },
+  {
+    "id": "mjc63t1lpm205kz6v1",
+    "name": "行业打标-mingwei",
+    "description": "",
+    "project": "",
+    "start": "1:30",
+    "steps": [
+      "[] 确定如何实现方案",
+      "[] 开发",
+      "[] 确定测试方案",
+      "[] 测试"
+    ],
+    "status": null,
+    "end": "3:00",
+    "date": "2025-12-19",
+    "created": "2025-12-19T01:05:23.913Z",
+    "updated": "2025-12-19T01:05:23.913Z"
+  },
+  {
+    "id": "mjc645ra938gtdxznm8",
+    "name": "知识库工时评估",
+    "description": "",
+    "project": "",
+    "start": null,
+    "steps": [],
+    "status": null,
+    "end": null,
+    "date": "2025-12-19",
+    "created": "2025-12-19T01:05:40.390Z",
+    "updated": "2025-12-19T01:05:40.390Z"
+  },
+  {
+    "id": "mjcez6y0vpfnl39ypmh",
+    "name": "fix-产品推荐匹配错误--1. 宁波宁波中科科创创新能源科技有限公司匹配到了医疗产品2. Fanuc的产品推荐匹配到了流体行业的产品",
+    "description": "",
+    "project": "",
+    "start": null,
+    "steps": [],
+    "status": null,
+    "end": null,
+    "date": "2025-12-19",
+    "created": "2025-12-19T05:13:45.192Z",
+    "updated": "2025-12-19T05:13:45.192Z"
+  },
+  {
+    "id": "mjcf23naq9kweezjvk",
+    "name": "fix-产品推荐出现重复且外国公司的产品推荐出现中文",
+    "description": "",
+    "project": "",
+    "start": null,
+    "steps": [],
+    "status": null,
+    "end": null,
+    "date": "2025-12-19",
+    "created": "2025-12-19T05:16:00.886Z",
+    "updated": "2025-12-19T05:16:00.886Z"
+  },
+  {
+    "id": "mjcf3nrk7uy60h6tflm",
+    "name": "fix-【用户语言偏好设置】保证Prospect report，知识库等支持多语言",
+    "description": "",
+    "project": "",
+    "start": null,
+    "steps": [],
+    "status": null,
+    "end": null,
+    "date": "2025-12-19",
+    "created": "2025-12-19T05:17:13.616Z",
+    "updated": "2025-12-19T05:17:13.616Z"
+  }
+]
