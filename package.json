@@ -2,13 +2,18 @@
   "name": "global-todo",
   "version": "1.0.0",
   "description": "A simple global todo list with CLI and Git sync",
+  "type": "module",
   "main": "index.js",
   "bin": {
     "todo": "./bin/todo.js"
   },
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "start": "node server.js",
+    "format": "prettier --write \"public/**/*.{js,html,css}\"",
+    "lint": "eslint public/js --fix"
   },
   "keywords": ["todo", "cli", "task"],
   "author": "",
@@ -16,7 +21,10 @@
   "dependencies": {
     "express": "^4.18.2",
     "cors": "^2.8.5"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0",
+    "prettier": "^3.1.0",
+    "eslint": "^8.56.0"
   }
 }
-
-

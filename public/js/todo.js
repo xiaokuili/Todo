@@ -15,6 +15,9 @@ export class TodoModule {
     this.todos = todos;
   }
 
+  // ============================================================================
+  // 主渲染方法
+  // ============================================================================
   render(dateFilter) {
     this.selectedDate = dateFilter;
     
@@ -112,7 +115,32 @@ export class TodoModule {
     if (window.lucide) window.lucide.createIcons();
   }
 
+  // ============================================================================
+  // TODO CARD 渲染相关
+  // ============================================================================
+  // 如需调整 todo card 的 UI，主要修改以下方法：
+  // - renderTodoCard() - todo card 的主要渲染方法
+  // - renderTodoCardContent() - todo card 内容区域（状态、名称、步骤等）
+  // ============================================================================
+
   renderTodoCard(todo) {
+    const isCompleted = todo.status === 'completed';
+    
+    // 加载时间选择器样式（只加载一次）
+    this.loadTimePickerStyles();
+
+    return `
+      <div class="flex gap-4 items-start">
+        <!-- 左侧：时间卡片 -->
+        ${this.renderTimeCard(todo)}
+        
+        <!-- 右侧：Todo卡片 -->
+        ${this.renderTodoCardContent(todo, isCompleted)}
+      </div>
+    `;
+  }
+
+  renderTodoCardContent(todo, isCompleted) {
     const statusIcon = {
       'pending': 'circle',
       'in_progress': 'arrow-right',
@@ -125,10 +153,80 @@ export class TodoModule {
       'completed': 'text-green-500'
     };
 
-    const isCompleted = todo.status === 'completed';
-    const hasTime = todo.start || todo.end;
-    
-    // 确保样式只加载一次
+    return `
+      <div class="flex-1 group border border-slate-200 rounded-xl p-4 hover:border-slate-300 hover:shadow-sm transition-all">
+        <div class="flex items-start gap-3">
+          <!-- 状态图标 -->
+          <button 
+            onclick="window.todoModule.cycleStatus('${todo.id}', '${todo.status || 'pending'}')"
+            class="${statusColor[todo.status] || 'text-slate-400'} flex-shrink-0 hover:opacity-70 transition-opacity"
+            title="点击切换状态">
+            <i data-lucide="${statusIcon[todo.status] || 'circle'}" class="w-5 h-5"></i>
+          </button>
+          
+          <!-- 内容区 -->
+          <div class="flex-1 min-w-0">
+            <!-- 任务名称 -->
+            <div class="flex items-start gap-2 mb-2">
+              <input 
+                type="text"
+                value="${escapeAttr(todo.name)}"
+                onchange="window.todoModule.updateField('${todo.id}', 'name', this.value)"
+                class="flex-1 ${isCompleted ? 'line-through text-slate-400' : 'text-slate-800'} font-medium bg-transparent border-none outline-none focus:bg-slate-50 rounded px-2 py-1 -mx-2 -my-1"
+                placeholder="任务名称">
+            </div>
+            
+            <!-- 描述和步骤 -->
+            <div class="mt-3 pt-3 border-t border-slate-100 space-y-2">
+              ${todo.description ? `<p class="text-xs text-slate-600">${escapeHtml(todo.description)}</p>` : ''}
+              ${renderSteps(todo.steps, todo.id)}
+              
+              <!-- 添加步骤按钮 -->
+              <div class="flex items-center gap-2">
+                <button 
+                  onclick="window.todoModule.addStep('${todo.id}')"
+                  class="flex items-center gap-1 text-xs text-slate-400 hover:text-slate-600 bg-slate-50 hover:bg-slate-100 px-2 py-1 rounded transition-colors"
+                  title="添加步骤">
+                  <i data-lucide="plus" class="w-3 h-3"></i>
+                  添加步骤
+                </button>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 删除按钮 -->
+          <button 
+            onclick="window.todoModule.deleteTodo('${todo.id}')"
+            class="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-500 transition-all flex-shrink-0"
+            title="删除">
+            <i data-lucide="trash-2" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
+    `;
+  }
+
+  // ============================================================================
+  // 时间卡片渲染相关
+  // ============================================================================
+  // 如需调整时间 UI，主要修改以下方法：
+  // - renderTimeCard() - 时间卡片的渲染入口
+  // - loadTimePickerStyles() - 时间选择器的样式加载
+  // 时间选择器的具体实现请查看 time-picker.js 文件
+  // ============================================================================
+
+  renderTimeCard(todo) {
+    return `
+      <div class="flex-shrink-0">
+        ${this.editingTimeId === todo.id 
+          ? TimePicker.renderInlineTimeCardEdit(todo, this.onTimeChange)
+          : TimePicker.renderInlineTimeCard(todo, this.onTimeChange)
+        }
+      </div>
+    `;
+  }
+
+  loadTimePickerStyles() {
     if (!document.getElementById('swiss-time-picker-styles')) {
       const style = document.createElement('style');
       style.id = 'swiss-time-picker-styles';
@@ -172,100 +270,11 @@ export class TodoModule {
       `;
       document.head.appendChild(style);
     }
-
-    return `
-      <div class="flex gap-4 items-start">
-        <!-- 左侧：时间卡片 -->
-        <div class="flex-shrink-0">
-          ${this.editingTimeId === todo.id 
-            ? TimePicker.renderInlineTimeCardEdit(todo, this.onTimeChange)
-            : TimePicker.renderInlineTimeCard(todo, this.onTimeChange)
-          }
-        </div>
-        
-        <!-- 右侧：Todo卡片 -->
-        <div class="flex-1 group border border-slate-200 rounded-xl p-4 hover:border-slate-300 hover:shadow-sm transition-all">
-          <div class="flex items-start gap-3">
-            <!-- 状态图标 -->
-            <button 
-              onclick="window.todoModule.cycleStatus('${todo.id}', '${todo.status || 'pending'}')"
-              class="${statusColor[todo.status] || 'text-slate-400'} flex-shrink-0 hover:opacity-70 transition-opacity"
-              title="点击切换状态">
-              <i data-lucide="${statusIcon[todo.status] || 'circle'}" class="w-5 h-5"></i>
-            </button>
-            
-            <!-- 内容区 -->
-            <div class="flex-1 min-w-0">
-              <!-- 任务名称 -->
-              <div class="flex items-start gap-2 mb-2">
-                <input 
-                  type="text"
-                  value="${escapeAttr(todo.name)}"
-                  onchange="window.todoModule.updateField('${todo.id}', 'name', this.value)"
-                  class="flex-1 ${isCompleted ? 'line-through text-slate-400' : 'text-slate-800'} font-medium bg-transparent border-none outline-none focus:bg-slate-50 rounded px-2 py-1 -mx-2 -my-1"
-                  placeholder="任务名称">
-              </div>
-              
-              <!-- 元信息行 -->
-              <div class="flex flex-wrap items-center gap-2 text-xs">
-                ${todo.project ? `
-                  <input 
-                    type="text"
-                    value="${escapeAttr(todo.project)}"
-                    onchange="window.todoModule.updateField('${todo.id}', 'project', this.value)"
-                    class="flex items-center gap-1 text-slate-600 bg-slate-100 hover:bg-slate-200 px-2 py-1 rounded outline-none"
-                    style="width: ${Math.max(60, (todo.project.length + 2) * 8)}px"
-                    placeholder="项目名">
-                ` : `
-                  <button 
-                    onclick="window.todoModule.editField('${todo.id}', 'project')"
-                    class="flex items-center gap-1 text-slate-300 hover:text-slate-500 bg-slate-50 px-2 py-1 rounded"
-                    title="点击添加项目">
-                    <i data-lucide="folder" class="w-3 h-3"></i>
-                    添加项目
-                  </button>
-                `}
-                
-                <select 
-                  onchange="window.todoModule.updateField('${todo.id}', 'status', this.value)"
-                  class="text-xs border border-slate-200 rounded px-2 py-1 bg-white hover:border-slate-300 outline-none"
-                  onclick="event.stopPropagation()">
-                  <option value="" ${!todo.status ? 'selected' : ''}>未设置</option>
-                  <option value="pending" ${todo.status === 'pending' ? 'selected' : ''}>待处理</option>
-                  <option value="in_progress" ${todo.status === 'in_progress' ? 'selected' : ''}>进行中</option>
-                  <option value="completed" ${todo.status === 'completed' ? 'selected' : ''}>已完成</option>
-                </select>
-              </div>
-              
-              <!-- 描述和步骤 -->
-              ${(todo.description || (todo.steps && todo.steps.length > 0)) ? `
-                <div class="mt-3 pt-3 border-t border-slate-100 space-y-2">
-                  ${todo.description ? `<p class="text-xs text-slate-600">${escapeHtml(todo.description)}</p>` : ''}
-                  ${renderSteps(todo.steps)}
-                </div>
-              ` : ''}
-            </div>
-            
-            <!-- 删除按钮 -->
-            <button 
-              onclick="window.todoModule.deleteTodo('${todo.id}')"
-              class="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-500 transition-all flex-shrink-0"
-              title="删除">
-              <i data-lucide="trash-2" class="w-4 h-4"></i>
-            </button>
-          </div>
-        </div>
-      </div>
-    `;
   }
 
-
-  async cycleStatus(id, currentStatus) {
-    const statusCycle = ['pending', 'in_progress', 'completed'];
-    const currentIndex = statusCycle.indexOf(currentStatus || 'pending');
-    const nextStatus = statusCycle[(currentIndex + 1) % statusCycle.length];
-    await this.updateField(id, 'status', nextStatus);
-  }
+  // ============================================================================
+  // 时间操作方法
+  // ============================================================================
 
   editTime(id) {
     this.editingTimeId = id;
@@ -325,11 +334,15 @@ export class TodoModule {
     if (this.onUpdate) await this.onUpdate();
   }
 
-  async editField(id, field) {
-    const value = prompt(`请输入${field === 'project' ? '项目名' : '内容'}:`);
-    if (value !== null) {
-      await this.updateField(id, field, value.trim());
-    }
+  // ============================================================================
+  // Todo 操作方法
+  // ============================================================================
+
+  async cycleStatus(id, currentStatus) {
+    const statusCycle = ['pending', 'in_progress', 'completed'];
+    const currentIndex = statusCycle.indexOf(currentStatus || 'pending');
+    const nextStatus = statusCycle[(currentIndex + 1) % statusCycle.length];
+    await this.updateField(id, 'status', nextStatus);
   }
 
   async updateField(id, field, value) {
@@ -355,7 +368,83 @@ export class TodoModule {
       alert('删除失败，请重试');
     }
   }
+
+  // ============================================================================
+  // Steps 操作方法
+  // ============================================================================
+
+  async addStep(id) {
+    const stepText = prompt('请输入步骤内容:');
+    if (stepText === null || !stepText.trim()) {
+      return;
+    }
+
+    const todo = this.todos.find(t => t.id === id);
+    if (!todo) return;
+
+    const currentSteps = todo.steps || [];
+    const newStep = `[ ] ${stepText.trim()}`;
+    const updatedSteps = [...currentSteps, newStep];
+
+    try {
+      await api.updateTodo(id, { steps: updatedSteps });
+      if (this.onUpdate) await this.onUpdate();
+    } catch (error) {
+      console.error('添加步骤失败:', error);
+      alert('添加步骤失败，请重试');
+    }
+  }
+
+  async toggleStep(id, stepIndex) {
+    const todo = this.todos.find(t => t.id === id);
+    if (!todo) return;
+
+    const currentSteps = todo.steps || [];
+    if (stepIndex < 0 || stepIndex >= currentSteps.length) return;
+
+    const step = currentSteps[stepIndex].trim();
+    const isCompleted = /^\[[xX]\]/.test(step);
+    const stepText = step.replace(/^\[[ xX]?\]\s*/, '');
+    
+    const newStep = isCompleted ? `[ ] ${stepText}` : `[x] ${stepText}`;
+    const updatedSteps = [...currentSteps];
+    updatedSteps[stepIndex] = newStep;
+
+    try {
+      await api.updateTodo(id, { steps: updatedSteps });
+      if (this.onUpdate) await this.onUpdate();
+    } catch (error) {
+      console.error('更新步骤失败:', error);
+      alert('更新步骤失败，请重试');
+    }
+  }
+
+  async deleteStep(id, stepIndex) {
+    if (!confirm('确定要删除这个步骤吗？')) {
+      return;
+    }
+
+    const todo = this.todos.find(t => t.id === id);
+    if (!todo) return;
+
+    const currentSteps = todo.steps || [];
+    if (stepIndex < 0 || stepIndex >= currentSteps.length) return;
+
+    const updatedSteps = currentSteps.filter((_, index) => index !== stepIndex);
+
+    try {
+      await api.updateTodo(id, { steps: updatedSteps });
+      if (this.onUpdate) await this.onUpdate();
+    } catch (error) {
+      console.error('删除步骤失败:', error);
+      alert('删除步骤失败，请重试');
+    }
+  }
 }
+
+// ============================================================================
+// 工具函数
+// ============================================================================
 
 // 工具函数
 function formatDateHeader(dateStr) {
@@ -443,26 +532,35 @@ function calculateDuration(start, end) {
   return `${hours}小时${minutes}分钟`;
 }
 
-function renderSteps(steps) {
+function renderSteps(steps, todoId) {
   if (!steps || !Array.isArray(steps) || steps.length === 0) {
     return '';
   }
   
-  const stepsHtml = steps.slice(0, 5).map(step => {
+  const stepsHtml = steps.map((step, index) => {
     const trimmed = step.trim();
     const isCompleted = /^\[[xX]\]/.test(trimmed);
     const stepText = trimmed.replace(/^\[[ xX]?\]\s*/, '');
     return `
-      <div class="flex items-start gap-2 text-xs ${isCompleted ? 'line-through text-slate-400' : 'text-slate-600'}">
-        <span class="flex-shrink-0">${isCompleted ? '✓' : '○'}</span>
-        <span>${escapeHtml(stepText)}</span>
+      <div class="flex items-start gap-2 text-xs group/step ${isCompleted ? 'line-through text-slate-400' : 'text-slate-600'}">
+        <button 
+          onclick="window.todoModule.toggleStep('${todoId}', ${index})"
+          class="flex-shrink-0 hover:opacity-70 transition-opacity"
+          title="点击切换完成状态">
+          ${isCompleted ? '✓' : '○'}
+        </button>
+        <span class="flex-1">${escapeHtml(stepText)}</span>
+        <button 
+          onclick="window.todoModule.deleteStep('${todoId}', ${index})"
+          class="opacity-0 group-hover/step:opacity-100 text-slate-400 hover:text-red-500 transition-all flex-shrink-0"
+          title="删除步骤">
+          <i data-lucide="x" class="w-3 h-3"></i>
+        </button>
       </div>
     `;
   }).join('');
   
-  const more = steps.length > 5 ? `<div class="text-xs text-slate-400 ml-4">...还有 ${steps.length - 5} 个步骤</div>` : '';
-  
-  return `<div class="space-y-1">${stepsHtml}${more}</div>`;
+  return `<div class="space-y-1">${stepsHtml}</div>`;
 }
 
 function escapeHtml(text) {

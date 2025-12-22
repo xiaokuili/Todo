@@ -1,4 +1,13 @@
-// 瑞士极简风格的时间选择器组件
+// ============================================================================
+// 时间选择器组件 - 瑞士极简风格
+// ============================================================================
+// 如需调整时间 UI，主要修改以下方法：
+// - renderViewMode() - 查看模式的 UI 渲染
+// - renderEditMode() - 编辑模式的 UI 渲染
+// - renderInlineTimeCard() - 内联时间卡片（查看模式）
+// - renderInlineTimeCardEdit() - 内联时间卡片（编辑模式）
+// ============================================================================
+
 export class TimePicker {
   constructor(containerId) {
     this.container = document.getElementById(containerId);
@@ -7,7 +16,10 @@ export class TimePicker {
     this.onTimeChange = null;
   }
 
-  // 显示某个todo的时间卡片（查看模式）
+  // ============================================================================
+  // 公共方法
+  // ============================================================================
+
   showTodoTime(todo, onChange) {
     this.currentTodo = todo;
     this.onTimeChange = onChange;
@@ -15,26 +27,22 @@ export class TimePicker {
     this.render();
   }
 
-  // 进入编辑模式
   enterEditMode() {
     this.editMode = true;
     this.render();
   }
 
-  // 退出编辑模式
   exitEditMode() {
     this.editMode = false;
     this.render();
   }
 
-  // 隐藏整个组件
   hide() {
     this.currentTodo = null;
     this.editMode = false;
     this.render();
   }
 
-  // 清除时间
   clear() {
     if (this.currentTodo && this.onTimeChange) {
       this.onTimeChange(this.currentTodo.id, null, null);
@@ -58,7 +66,13 @@ export class TimePicker {
     }
   }
 
-  // 渲染查看模式（基于 TimePickerApp 设计）
+  // ============================================================================
+  // 时间 UI 渲染方法（独立组件模式）
+  // ============================================================================
+  // 这些方法用于独立的 TimePicker 组件实例
+  // 如需调整时间 UI 样式，主要修改这两个方法
+  // ============================================================================
+
   renderViewMode() {
     const start = this.currentTodo.start || '--:--';
     const end = this.currentTodo.end || '--:--';
@@ -138,7 +152,7 @@ export class TimePicker {
           </div>
         </div>
 
-        ${hasTime ? `
+          ${hasTime ? `
           <!-- 清除按钮 -->
           <button 
             onclick="window.timePicker.clear(); event.stopPropagation();"
@@ -152,7 +166,6 @@ export class TimePicker {
     if (window.lucide) window.lucide.createIcons();
   }
 
-  // 渲染编辑模式（基于 TimePickerApp 设计）
   renderEditMode() {
     const startHour = this.currentTodo.start ? this.currentTodo.start.split(':')[0] : '09';
     const startMin = this.currentTodo.start ? this.currentTodo.start.split(':')[1] : '00';
@@ -204,7 +217,7 @@ export class TimePicker {
         <div class="swiss-time-group flex items-center gap-2 px-3 py-1.5 rounded-full">
           <div class="flex items-center justify-center w-5 h-5">
             <i data-lucide="play" class="w-3 h-3 text-zinc-400 fill-zinc-400"></i>
-          </div>
+        </div>
           <div class="flex items-center">
             <input 
               type="text" 
@@ -292,6 +305,10 @@ export class TimePicker {
     if (window.lucide) window.lucide.createIcons();
   }
 
+  // ============================================================================
+  // 时间操作方法
+  // ============================================================================
+
   apply() {
     const startHour = document.getElementById('start-hour').value.padStart(2, '0');
     const startMin = document.getElementById('start-min').value.padStart(2, '0');
@@ -308,7 +325,13 @@ export class TimePicker {
     this.exitEditMode();
   }
 
-  // 静态方法：渲染内联时间卡片（用于 todo 列表）
+  // ============================================================================
+  // 内联时间卡片渲染方法（用于 todo 列表）
+  // ============================================================================
+  // 这些静态方法用于在 todo 列表中直接渲染时间卡片
+  // 如需调整时间 UI 样式，主要修改这两个方法
+  // ============================================================================
+
   static renderInlineTimeCard(todo, onTimeChange) {
     const start = todo.start || '--:--';
     const end = todo.end || '--:--';
@@ -361,7 +384,6 @@ export class TimePicker {
     `;
   }
 
-  // 静态方法：渲染内联时间卡片编辑模式（用于 todo 列表）
   static renderInlineTimeCardEdit(todo, onTimeChange) {
     const startHour = todo.start ? todo.start.split(':')[0] : '09';
     const startMin = todo.start ? todo.start.split(':')[1] : '00';
