@@ -718,43 +718,50 @@ function openBrowser(url) {
   }
 }
 
-// 启动 Web 服务器
+// 启动 Web 服务器（前端 + 后端）
 async function startWebServer() {
-  const PORT = 3000;
-  const URL = `http://localhost:${PORT}`;
+  const FRONTEND_PORT = 3000;
+  const BACKEND_PORT = 3001;
+  const URL = `http://localhost:${FRONTEND_PORT}`;
   
-  // 检查服务器是否已经在运行
-  const isRunning = await checkPort(PORT);
+  // 检查前端端口是否已经在运行
+  const frontendRunning = await checkPort(FRONTEND_PORT);
+  const backendRunning = await checkPort(BACKEND_PORT);
   
-  if (isRunning) {
+  if (frontendRunning && backendRunning) {
     console.log(`✅ Web 服务器已经在运行: ${URL}`);
     console.log(`🌐 正在打开浏览器...`);
     openBrowser(URL);
     return;
   }
   
-  // 启动服务器
-  console.log(`🚀 正在启动 Web 服务器...`);
-  const serverPath = path.join(__dirname, '..', 'server.js');
+  // 启动服务器（使用 npm run web 同时启动前后端）
+  console.log(`🚀 正在启动 Web 服务器（前端 + 后端）...`);
+  const projectRoot = path.join(__dirname, '..');
   
-  const serverProcess = spawn('node', [serverPath], {
+  // 切换到项目根目录并运行 npm run web
+  const webProcess = spawn('npm', ['run', 'web'], {
+    cwd: projectRoot,
     detached: true,
-    stdio: 'ignore'
+    stdio: 'ignore',
+    shell: true
   });
   
   // 分离子进程，使其在父进程退出后继续运行
-  serverProcess.unref();
+  webProcess.unref();
   
   console.log(`✅ Web 服务器已启动: ${URL}`);
+  console.log(`   - 前端 (Vite): http://localhost:${FRONTEND_PORT}`);
+  console.log(`   - 后端 (API): http://localhost:${BACKEND_PORT}`);
   
-  // 等待一秒钟确保服务器启动完成
-  await new Promise(resolve => setTimeout(resolve, 1000));
+  // 等待几秒钟确保服务器启动完成
+  await new Promise(resolve => setTimeout(resolve, 3000));
   
   console.log(`🌐 正在打开浏览器...`);
   openBrowser(URL);
   
-  console.log(`\n💡 提示: 服务器在后台运行中，使用以下命令停止:`);
-  console.log(`   lsof -ti:${PORT} | xargs kill`);
+  console.log(`\n💡 提示：停止服务器请运行:`);
+  console.log(`   lsof -ti:${FRONTEND_PORT},${BACKEND_PORT} | xargs kill`);
 }
 
 // 主函数
