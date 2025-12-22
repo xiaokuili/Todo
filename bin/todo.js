@@ -2,8 +2,9 @@
 
 const fs = require('fs');
 const path = require('path');
-const { execSync } = require('child_process');
+const { execSync, spawn } = require('child_process');
 const readline = require('readline');
+const net = require('net');
 
 const TODO_DIR = path.join(__dirname, '..', 'todos');
 const OLD_TODO_FILE = path.join(__dirname, '..', 'todos.json');
@@ -672,8 +673,92 @@ function openCurrentFile() {
   }
 }
 
+// 检查端口是否被占用
+function checkPort(port) {
+  return new Promise((resolve) => {
+    const server = net.createServer();
+    
+    server.once('error', (err) => {
+      if (err.code === 'EADDRINUSE') {
+        resolve(true); // 端口被占用
+      } else {
+        resolve(false);
+      }
+    });
+    
+    server.once('listening', () => {
+      server.close();
+      resolve(false); // 端口未被占用
+    });
+    
+    server.listen(port);
+  });
+}
+
+// 打开浏览器
+function openBrowser(url) {
+  const platform = process.platform;
+  let command;
+  
+  try {
+    if (platform === 'darwin') {
+      // macOS
+      command = `open "${url}"`;
+    } else if (platform === 'win32') {
+      // Windows
+      command = `start "" "${url}"`;
+    } else {
+      // Linux
+      command = `xdg-open "${url}"`;
+    }
+    execSync(command, { stdio: 'ignore' });
+    console.log(`✅ 浏览器已打开`);
+  } catch (error) {
+    console.log(`💡 请手动打开浏览器访问: ${url}`);
+  }
+}
+
+// 启动 Web 服务器
+async function startWebServer() {
+  const PORT = 3000;
+  const URL = `http://localhost:${PORT}`;
+  
+  // 检查服务器是否已经在运行
+  const isRunning = await checkPort(PORT);
+  
+  if (isRunning) {
+    console.log(`✅ Web 服务器已经在运行: ${URL}`);
+    console.log(`🌐 正在打开浏览器...`);
+    openBrowser(URL);
+    return;
+  }
+  
+  // 启动服务器
+  console.log(`🚀 正在启动 Web 服务器...`);
+  const serverPath = path.join(__dirname, '..', 'server.js');
+  
+  const serverProcess = spawn('node', [serverPath], {
+    detached: true,
+    stdio: 'ignore'
+  });
+  
+  // 分离子进程，使其在父进程退出后继续运行
+  serverProcess.unref();
+  
+  console.log(`✅ Web 服务器已启动: ${URL}`);
+  
+  // 等待一秒钟确保服务器启动完成
+  await new Promise(resolve => setTimeout(resolve, 1000));
+  
+  console.log(`🌐 正在打开浏览器...`);
+  openBrowser(URL);
+  
+  console.log(`\n💡 提示: 服务器在后台运行中，使用以下命令停止:`);
+  console.log(`   lsof -ti:${PORT} | xargs kill`);
+}
+
 // 主函数
-function main() {
+async function main() {
   const args = process.argv.slice(2);
   let command = args[0];
 
@@ -725,6 +810,10 @@ function main() {
       openCurrentFile();
       break;
 
+    case 'web':
+      await startWebServer();
+      break;
+
     case 'help':
     case '--help':
     case '-h':
@@ -742,6 +831,8 @@ function main() {
 
   open, file                 打开/查看当前日期的待办文件（用于复杂编辑）
 
+  web                        启动 Web 界面（自动检测并启动服务器，打开浏览器）
+
   sync                       同步（拉取 + 提交 + 推送）
 
 示例:
@@ -749,6 +840,7 @@ function main() {
   todo list                    # 查看当天的待办
   todo list --status pending   # 按状态过滤
   todo open                    # 打开当前日期的文件进行编辑
+  todo web                     # 启动 Web 界面
   todo sync                    # 同步（拉取+提交+推送）
       `);
       break;

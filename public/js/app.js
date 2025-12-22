@@ -14,6 +14,9 @@ export async function initApp() {
   // 设置回调
   todoList.onUpdate = loadAll;
 
+  // 暴露到全局
+  window.todoModule = todoList;
+
   // 绑定全局函数
   window.addNewTodo = async () => {
     const date = calendar.selectedDateStr || new Date().toISOString().split('T')[0];
@@ -31,6 +34,12 @@ export async function initApp() {
   };
 
   await loadAll();
+  
+  // 默认选择今天的日期
+  const today = new Date().toISOString().split('T')[0];
+  calendar.selectedDateStr = today;
+  calendar.render();
+  todoList.render(today);
 }
 
 async function loadAll() {

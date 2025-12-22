@@ -45,7 +45,18 @@ git remote add origin https://github.com/xiaokuili/Todo # 可选：GitHub/GitLab
 
 ### Web 界面（推荐）
 
-启动 Web 服务器：
+**方式 1：使用 `todo web` 命令（推荐，最简单）**
+
+```bash
+todo web
+```
+
+该命令会：
+- ✅ 自动检测服务器是否已运行
+- 🚀 如果未运行，自动启动服务器（后台运行）
+- 🌐 自动打开浏览器访问 `http://localhost:3000`
+
+**方式 2：手动启动服务器**
 
 ```bash
 cd todo
@@ -61,6 +72,17 @@ npm start
 - 🎨 现代化的界面设计
 - 📱 响应式设计，支持移动端
 
+**停止服务器：**
+
+```bash
+# macOS/Linux
+lsof -ti:3000 | xargs kill
+
+# Windows
+netstat -ano | findstr :3000
+taskkill /PID <PID> /F
+```
+
 ### 命令行界面
 
 ### 基本命令
@@ -70,16 +92,16 @@ npm start
 todo list
 
 # 添加待办
-todo add "完成项目文档" --project work
+todo add "完成项目文档"
 
-# 更新状态和步骤
-todo update <id> --status in_progress --steps "步骤1,步骤2"
+# 启动 Web 界面（推荐）
+todo web
 
-# 标记完成
-todo done <id>
+# 打开当前日期的文件进行编辑
+todo open
 
-# 删除待办
-todo remove <id>
+# 同步到远程仓库
+todo sync
 
 # 查看帮助
 todo help
@@ -94,13 +116,7 @@ todo list --project work
 # 按状态过滤
 todo list --status pending
 
-# 更新多个字段
-todo update <id> --name "新名称" --status completed
-
 # Git 同步
-todo pull          # 从远程拉取
-todo commit "更新待办"  # 提交更改
-todo push          # 推送到远程
 todo sync          # 一键同步（拉取+提交+推送）
 ```
 
@@ -158,16 +174,15 @@ todo sync          # 一键同步（拉取+提交+推送）
 ## 示例
 
 ```bash
-# 添加一个重要的待办
-todo add "重构用户模块" --project dev --end "2024-12-31"
+# 快速添加待办
+todo add "重构用户模块"
 
 # 查看所有待办
 todo list
 
-# 更新状态和步骤
-todo update <id> --status in_progress --steps "步骤1,步骤2"
+# 启动 Web 界面进行详细编辑
+todo web
 
-# 完成后同步
-todo done <id>
+# 完成后同步到远程
 todo sync
 ```

@@ -4,7 +4,7 @@
     "name": "fix_ipc_bug",
     "description": "",
     "project": "",
-    "start": "5:00",
+    "start": "16:00",
     "steps": [
       "[X] 定位错误, 采集还是组包",
       "[X] 确定方案",
@@ -13,28 +13,28 @@
       "[] 上线"
     ],
     "status": null,
-    "end": "6: 00",
+    "end": "17:00",
     "date": "2025-12-19",
     "created": "2025-12-19T01:05:13.645Z",
-    "updated": "2025-12-19T01:05:13.645Z"
+    "updated": "2025-12-19T07:49:26.481Z"
   },
   {
     "id": "mjc63t1lpm205kz6v1",
     "name": "行业打标-mingwei",
     "description": "",
     "project": "",
-    "start": "1:30",
+    "start": "01:30",
     "steps": [
       "[] 确定如何实现方案",
       "[] 开发",
       "[] 确定测试方案",
       "[] 测试"
     ],
-    "status": null,
-    "end": "3:00",
+    "status": "completed",
+    "end": "16:00",
     "date": "2025-12-19",
     "created": "2025-12-19T01:05:23.913Z",
-    "updated": "2025-12-19T01:05:23.913Z"
+    "updated": "2025-12-19T09:05:43.440Z"
   },
   {
     "id": "mjc645ra938gtdxznm8",
@@ -87,5 +87,18 @@
     "date": "2025-12-19",
     "created": "2025-12-19T05:17:13.616Z",
     "updated": "2025-12-19T05:17:13.616Z"
+  },
+  {
+    "id": "mjch7hou9caadojnwz",
+    "name": "feat-测试阿里云搜索",
+    "description": "",
+    "project": "",
+    "start": null,
+    "steps": [],
+    "status": null,
+    "end": null,
+    "date": "2025-12-19",
+    "created": "2025-12-19T06:16:11.598Z",
+    "updated": "2025-12-19T06:18:04.007Z"
   }
 ]
