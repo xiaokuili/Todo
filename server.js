@@ -4,7 +4,7 @@ const path = require('path');
 const cors = require('cors');
 
 const app = express();
-const PORT = 3000;
+const PORT = 3001; // 改为 3001，避免与 Vite 冲突
 const TODO_DIR = path.join(__dirname, 'todos');
 
 app.use(cors());

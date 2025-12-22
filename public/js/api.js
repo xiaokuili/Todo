@@ -3,15 +3,24 @@ const API_BASE = '/api/todos';
 
 export const api = {
   async getTodos() {
-    const res = await fetch(API_BASE);
-    return res.json();
+    try {
+      const res = await fetch(API_BASE);
+      if (!res.ok) {
+        throw new Error(`HTTP error! status: ${res.status}`);
+      }
+      const data = await res.json();
+      return data;
+    } catch (error) {
+      console.error('获取待办事项失败:', error);
+      throw error;
+    }
   },
 
   async createTodo(todo) {
     const res = await fetch(API_BASE, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(todo)
+      body: JSON.stringify(todo),
     });
     return res.json();
   },
@@ -20,7 +29,7 @@ export const api = {
     const res = await fetch(`${API_BASE}/${id}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(updates)
+      body: JSON.stringify(updates),
     });
     return res.json();
   },
@@ -28,7 +37,5 @@ export const api = {
   async deleteTodo(id) {
     const res = await fetch(`${API_BASE}/${id}`, { method: 'DELETE' });
     return res.json();
-  }
+  },
 };
-
-
