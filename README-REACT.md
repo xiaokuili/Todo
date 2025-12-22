@@ -11,6 +11,14 @@ npm install
 
 ### 2. 启动开发服务器
 
+**方式一：一键启动（推荐）**
+```bash
+npm run web
+```
+这会同时启动前端和后端服务器，访问：http://localhost:3000
+
+**方式二：分别启动（用于调试）**
+
 需要两个终端：
 
 **终端 1 - 前端开发服务器（Vite + React）**
@@ -108,8 +116,8 @@ npm run build
 
 如果你之前在使用旧版本，现在只需要：
 1. 运行 `npm install` 安装新依赖
-2. 运行 `npm run dev` 启动开发服务器（终端1）
-3. 运行 `npm start` 启动后端服务器（终端2）
-4. 访问 http://localhost:3000
+2. 运行 `npm run web` 启动开发服务器
+3. 访问 http://localhost:3000
 
 享受 React 开发的乐趣！🎉
+

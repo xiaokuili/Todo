@@ -1,6 +1,5 @@
 import { useMemo } from 'react';
 import { TodoCard } from './TodoCard';
-import { api } from '../api';
 
 function formatDateHeader(dateStr) {
   const date = new Date(dateStr + 'T00:00:00');
