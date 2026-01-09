@@ -7,38 +7,44 @@
     "start": "10:42",
     "steps": [
       "[x] doc",
-      "[ ] 代码实现"
+      "[x] 代码实现",
+      "[x] 11测试",
+      "[x] 部署到嘉禾"
     ],
-    "status": "pending",
-    "end": "14:40",
+    "status": "completed",
+    "end": "20:30",
     "date": "2025-12-22",
     "created": "2025-12-22T02:40:40.334Z",
-    "updated": "2025-12-22T05:47:18.384Z"
+    "updated": "2025-12-22T12:24:35.936Z"
   },
   {
     "id": "mjgju7ov791fst2s8vt",
     "name": "aipbug 修复",
     "description": "",
     "project": "",
-    "start": null,
-    "steps": [],
-    "status": null,
-    "end": null,
+    "start": "21:00",
+    "steps": [
+      "[x] 1. 知识库推荐",
+      "[x] 知识库去重",
+      "[x] 国家标准化"
+    ],
+    "status": "completed",
+    "end": "23:59",
     "date": "2025-12-22",
     "created": "2025-12-22T02:40:55.663Z",
-    "updated": "2025-12-22T02:40:55.663Z"
+    "updated": "2025-12-23T11:30:26.401Z"
   },
   {
     "id": "mjgjucxe96dhixqufqp",
     "name": "西湖大学部署",
     "description": "",
     "project": "",
-    "start": null,
+    "start": "23:30",
     "steps": [],
     "status": null,
-    "end": null,
+    "end": "23:00",
     "date": "2025-12-22",
     "created": "2025-12-22T02:41:02.450Z",
-    "updated": "2025-12-22T02:41:02.450Z"
+    "updated": "2025-12-22T12:24:31.307Z"
   }
 ]

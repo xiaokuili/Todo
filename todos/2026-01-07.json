@@ -1,0 +1,101 @@
+[
+  {
+    "id": "mk3g95mzj30f8ooynnt",
+    "name": "Icon Card",
+    "description": "",
+    "project": "",
+    "start": null,
+    "end": null,
+    "date": "2026-01-07",
+    "steps": [
+      "[ ] fix icon error in react"
+    ],
+    "status": "pending",
+    "created": "2026-01-07T03:19:16.427Z",
+    "updated": "2026-01-07T09:33:54.261Z",
+    "actionItems": [
+      {
+        "id": "action_mk3p8gdazfr8q",
+        "content": "修复 React 中的 icon 错误",
+        "status": "completed",
+        "startTime": "2026-01-07T07:35:12.927Z",
+        "endTime": "2026-01-07T07:38:14.079Z",
+        "duration": 181152,
+        "note": "问题是 import 路径错误，已修复",
+        "autoStopped": false
+      },
+      {
+        "id": "action_mk3p9ywei7okh",
+        "content": "添加 icon 单元测试",
+        "status": "completed",
+        "startTime": "2026-01-07T09:33:47.297Z",
+        "endTime": "2026-01-07T09:33:53.530Z",
+        "duration": 6233,
+        "note": null,
+        "autoStopped": false
+      },
+      {
+        "id": "action_mk3p9yx96721x",
+        "content": "编写组件文档",
+        "status": "completed",
+        "startTime": "2026-01-07T09:33:51.396Z",
+        "endTime": "2026-01-07T09:33:54.261Z",
+        "duration": 2865,
+        "note": null,
+        "autoStopped": false
+      }
+    ]
+  },
+  {
+    "id": "mk3g9mvvtf8s4xny28c",
+    "name": "Lack packae",
+    "description": "",
+    "project": "",
+    "start": null,
+    "end": null,
+    "date": "2026-01-07",
+    "steps": [
+      "[ ] check mutiprocess is useful to calculate"
+    ],
+    "status": "pending",
+    "created": "2026-01-07T03:19:38.779Z",
+    "updated": "2026-01-08T01:03:47.223Z",
+    "actionItems": [
+      {
+        "id": "action_mk3t8scavt708",
+        "content": "ceshi",
+        "status": "completed",
+        "startTime": "2026-01-07T09:22:56.589Z",
+        "endTime": "2026-01-07T09:22:59.181Z",
+        "duration": 2592,
+        "note": null,
+        "autoStopped": false
+      },
+      {
+        "id": "action_mk3tndn0kqubx",
+        "content": "测试",
+        "status": "completed",
+        "startTime": "2026-01-07T09:34:16.217Z",
+        "endTime": "2026-01-08T01:03:47.222Z",
+        "duration": 55771005,
+        "note": null,
+        "autoStopped": true
+      }
+    ]
+  },
+  {
+    "id": "mk3o8u4iiluqpj7mxv",
+    "name": "Push version to Snake",
+    "description": "",
+    "project": "",
+    "start": null,
+    "end": null,
+    "date": "2026-01-07",
+    "steps": [
+      "[ ] Todesk test Version"
+    ],
+    "status": "pending",
+    "created": "2026-01-07T07:02:58.434Z",
+    "updated": "2026-01-07T07:03:11.806Z"
+  }
+]

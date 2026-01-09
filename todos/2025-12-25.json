@@ -1,0 +1,73 @@
+[
+  {
+    "id": "mjky00d3grhzdmujsc4",
+    "name": "知识库出方案",
+    "description": "",
+    "project": "",
+    "start": "16:30",
+    "end": "18:00",
+    "date": "2025-12-25",
+    "steps": [
+      "[ ] 表结构确认"
+    ],
+    "status": "completed",
+    "created": "2025-12-25T04:28:25.431Z",
+    "updated": "2025-12-25T12:45:56.316Z"
+  },
+  {
+    "id": "mjky07dh0qyzxwkofdbd",
+    "name": "油液bug 修复",
+    "description": "",
+    "project": "",
+    "start": null,
+    "end": null,
+    "date": "2025-12-25",
+    "steps": [],
+    "status": "pending",
+    "created": "2025-12-25T04:28:34.517Z",
+    "updated": "2025-12-25T04:28:34.517Z"
+  },
+  {
+    "id": "mjky0cttfpj3vivyhmq",
+    "name": "采集费用统计 ",
+    "description": "",
+    "project": "",
+    "start": null,
+    "end": null,
+    "date": "2025-12-25",
+    "steps": [],
+    "status": "pending",
+    "created": "2025-12-25T04:28:41.585Z",
+    "updated": "2025-12-25T04:28:41.585Z"
+  },
+  {
+    "id": "mjky0j3qrtacy44flke",
+    "name": "4000 data ",
+    "description": "",
+    "project": "",
+    "start": "09:00",
+    "end": "16:00",
+    "date": "2025-12-25",
+    "steps": [
+      "[ ] 行业打标",
+      "[ ] 数据提取",
+      "[ ] 数据采集启动"
+    ],
+    "status": "completed",
+    "created": "2025-12-25T04:28:49.718Z",
+    "updated": "2025-12-25T12:45:54.843Z"
+  },
+  {
+    "id": "mjky0qjc7ljts1rd4r7",
+    "name": "aipbug 修复",
+    "description": "",
+    "project": "",
+    "start": null,
+    "end": null,
+    "date": "2025-12-25",
+    "steps": [],
+    "status": "pending",
+    "created": "2025-12-25T04:28:59.352Z",
+    "updated": "2025-12-25T04:28:59.352Z"
+  }
+]

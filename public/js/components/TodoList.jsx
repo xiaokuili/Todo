@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { TodoCard } from './TodoCard';
+import { TaskRow } from './TaskRow';
 
 function formatDateHeader(dateStr) {
   const date = new Date(dateStr + 'T00:00:00');
@@ -85,12 +85,10 @@ export function TodoList({ todos, selectedDate, onUpdate, onDelete }) {
 
   if (filteredTodos.length === 0) {
     return (
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-12 text-center">
-        <div className="text-5xl mb-4">📝</div>
-        <h3 className="text-lg font-medium text-slate-700 mb-2">暂无待办事项</h3>
-        <p className="text-sm text-slate-500">
+      <div className="bg-white border border-slate-200 rounded-md p-12 text-center">
+        <div className="text-slate-400 text-sm">
           {selectedDate ? '该日期没有待办事项' : '点击左侧的"新建任务"按钮开始创建任务'}
-        </p>
+        </div>
       </div>
     );
   }
@@ -98,12 +96,10 @@ export function TodoList({ todos, selectedDate, onUpdate, onDelete }) {
   if (selectedDate) {
     // 单日期视图
     return (
-      <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
-        <div className="space-y-4">
-          {sortedTodos.map((todo) => (
-            <TodoCard key={todo.id} todo={todo} onUpdate={onUpdate} onDelete={onDelete} />
-          ))}
-        </div>
+      <div>
+        {sortedTodos.map((todo) => (
+          <TaskRow key={todo.id} todo={todo} onUpdate={onUpdate} onDelete={onDelete} />
+        ))}
       </div>
     );
   }
@@ -118,16 +114,14 @@ export function TodoList({ todos, selectedDate, onUpdate, onDelete }) {
         const sorted = sortTodosByTime(dateTodos);
 
         return (
-          <div key={dateKey} className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 mb-4">
-            <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
-              <h2 className="text-base font-bold text-slate-800">{formatDateHeader(dateKey)}</h2>
+          <div key={dateKey} className="mb-6">
+            <div className="flex items-center justify-between px-1 py-2 mb-3">
+              <h2 className="text-sm font-bold text-slate-800">{formatDateHeader(dateKey)}</h2>
               <span className="text-xs text-slate-500">{dateTodos.length} 个任务</span>
             </div>
-            <div className="space-y-4">
-              {sorted.map((todo) => (
-                <TodoCard key={todo.id} todo={todo} onUpdate={onUpdate} onDelete={onDelete} />
-              ))}
-            </div>
+            {sorted.map((todo) => (
+              <TaskRow key={todo.id} todo={todo} onUpdate={onUpdate} onDelete={onDelete} />
+            ))}
           </div>
         );
       })}

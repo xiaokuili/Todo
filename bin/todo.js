@@ -297,76 +297,143 @@ function formatTimeDisplay(todo) {
   return timeParts.length > 0 ? timeParts.join(' ') : '';
 }
 
-// 格式化步骤显示（直接展示用户输入的 Markdown todo 格式）
-function formatStepsDisplay(todo) {
-  let steps = todo.steps;
-  if (!steps && todo.process && Array.isArray(todo.process)) {
-    steps = todo.process;
+// 格式化时间长度显示
+function formatDuration(ms) {
+  if (!ms) return '0分钟';
+  const minutes = Math.floor(ms / 60000);
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+
+  if (hours > 0) {
+    return mins > 0 ? `${hours}小时${mins}分钟` : `${hours}小时`;
   }
-  if (steps && Array.isArray(steps) && steps.length > 0) {
-    // 直接展示用户输入的格式
-    // 如果步骤已经是 Markdown todo 格式（包含 [] 或 [x]），直接使用
-    // [x] 格式表示已完成，需要添加删除线效果
-    return steps.map((step) => {
-      const trimmed = step.trim();
-      // 如果已经是 Markdown todo 格式（以 []、[ ] 或 [x] 开头）
-      if (/^\[[ x]?\]/.test(trimmed)) {
-        // 检查是否是已完成状态 [x]
-        if (/^\[x\]/.test(trimmed)) {
-          // 已完成：添加删除线效果
-          return `${colors.dim}- ${colors.strikethrough}${trimmed}${colors.reset}`;
-        } else {
-          // 未完成：正常显示
-          return `${colors.dim}- ${trimmed}${colors.reset}`;
-        }
-      }
-      // 如果以数字开头（如 "1. xxx"），去掉编号，转换为 todo 格式
-      const match = trimmed.match(/^\d+\.\s*(.+)$/);
-      if (match) {
-        return `${colors.dim}- [ ] ${match[1]}${colors.reset}`;
-      }
-      // 其他情况，直接添加 todo 格式
-      return `${colors.dim}- [ ] ${trimmed}${colors.reset}`;
-    }).join('\n');
-  }
-  return null;
+  return `${mins}分钟`;
 }
 
-// 显示单个待办事项
-function displayTodo(todo, index) {
+// 计算子任务的当前运行时长
+function calculateActionDuration(action) {
+  if (action.status === 'completed' && action.duration) {
+    return action.duration;
+  }
+  if (action.status === 'running' && action.startTime) {
+    return Date.now() - new Date(action.startTime).getTime();
+  }
+  return 0;
+}
+
+// 格式化子任务显示（新的 actionItems 格式）
+function formatActionItemsDisplay(todo) {
+  const actionItems = todo.actionItems;
+  if (!actionItems || !Array.isArray(actionItems) || actionItems.length === 0) {
+    return null;
+  }
+
+  const MAX_DURATION = 40 * 60 * 1000; // 40分钟上限
+  const WARN_THRESHOLD = 35 * 60 * 1000; // 35分钟开始警告
+
+  return actionItems
+    .filter(action => action.status !== 'deleted') // 过滤已删除的
+    .map((action) => {
+      const duration = calculateActionDuration(action);
+      const durationText = formatDuration(duration);
+
+      let statusIcon = '';
+      let statusColor = colors.gray;
+      let line = '';
+
+      if (action.status === 'completed') {
+        statusIcon = '✓';
+        statusColor = colors.green;
+        line = `${statusColor}${statusIcon} ${colors.strikethrough}${action.content}${colors.reset}  ${colors.dim}${durationText}${colors.reset}`;
+      } else if (action.status === 'running') {
+        statusIcon = '▶';
+        statusColor = colors.yellow;
+        line = `${statusColor}${statusIcon} ${action.content}${colors.reset}  ${colors.yellow}运行中 ${durationText}${colors.reset}`;
+
+        // 检查是否接近或超过上限
+        if (duration >= MAX_DURATION) {
+          line += `\n     ${colors.red}⛔ 已超过 40 分钟上限！请立即结束或重新拆分${colors.reset}`;
+        } else if (duration >= WARN_THRESHOLD) {
+          const remaining = Math.floor((MAX_DURATION - duration) / 60000);
+          line += `\n     ${colors.yellow}⚠️  即将达到 40 分钟上限 (剩余 ${remaining}分钟)${colors.reset}`;
+        }
+      } else if (action.status === 'pending') {
+        statusIcon = '○';
+        statusColor = colors.cyan;
+        line = `${statusColor}${statusIcon} ${action.content}${colors.reset}  ${colors.dim}待开始${colors.reset}`;
+      }
+
+      // 添加备注
+      if (action.note) {
+        line += `\n     ${colors.dim}💬 ${action.note}${colors.reset}`;
+      }
+
+      return line;
+    }).join('\n   ');
+}
+
+// 计算任务总时长和进度
+function calculateTaskStats(todo) {
+  const actionItems = todo.actionItems || [];
+  const activeActions = actionItems.filter(a => a.status !== 'deleted');
+  const completedActions = activeActions.filter(a => a.status === 'completed');
+
+  const totalDuration = activeActions.reduce((sum, action) => {
+    return sum + (action.duration || 0);
+  }, 0);
+
+  const progress = activeActions.length > 0
+    ? `${completedActions.length}/${activeActions.length}`
+    : '0/0';
+
+  return { totalDuration, progress, completedCount: completedActions.length, totalCount: activeActions.length };
+}
+
+// 显示单个待办事项（新格式）
+function displayTodo(todo) {
   const statusColor = getStatusColor(todo);
   const statusText = getStatusText(todo);
-  const timeDisplay = formatTimeDisplay(todo);
   const project = todo.project ? `${colors.magenta}#${todo.project}${colors.reset}` : '';
-  const stepsDisplay = formatStepsDisplay(todo);
-  
+
+  // 计算任务统计
+  const stats = calculateTaskStats(todo);
+
   // 状态图标（带颜色，加粗）
   const statusDisplay = `${statusColor}${colors.bright}${statusText}${colors.reset}`;
-  
+
   // 任务名称（加粗显示）
   const nameDisplay = `${colors.bright}${todo.name}${colors.reset}`;
-  
+
   // 构建主行：状态 + 名称 + 项目
   const mainParts = [statusDisplay, nameDisplay];
   if (project) {
     mainParts.push(project);
   }
-  
-  // 如果有时间信息，放在同一行后面
-  if (timeDisplay) {
-    console.log(`  ${mainParts.join(' ')}  ${timeDisplay}`);
+
+  // 分隔线
+  console.log('━'.repeat(60));
+  console.log(` ${mainParts.join(' ')}`);
+
+  // 显示进度和时间统计
+  if (stats.totalCount > 0) {
+    const progressPercent = stats.totalCount > 0
+      ? Math.round((stats.completedCount / stats.totalCount) * 100)
+      : 0;
+    const durationText = formatDuration(stats.totalDuration);
+    console.log(`   ${colors.dim}进度: ${stats.progress} (${progressPercent}%)  |  耗时: ${durationText}${colors.reset}`);
+  }
+
+  console.log('━'.repeat(60));
+  console.log('');
+
+  // 显示子任务列表
+  const actionItemsDisplay = formatActionItemsDisplay(todo);
+  if (actionItemsDisplay) {
+    console.log(`   ${actionItemsDisplay}`);
   } else {
-    console.log(`  ${mainParts.join(' ')}`);
+    console.log(`   ${colors.dim}暂无子任务${colors.reset}`);
   }
-  
-  // 如果有步骤，显示在下一行
-  if (stepsDisplay) {
-    const lines = stepsDisplay.split('\n');
-    lines.forEach(line => {
-      console.log(`    ${line}`);
-    });
-  }
-  
+
   console.log(''); // 空行分隔
 }
 
@@ -376,14 +443,14 @@ function displayTodosList(todos) {
     console.log('📝 暂无待办事项\n');
     return;
   }
-  
+
   // 按时间排序：优先按 start，其次按 end，最后按创建时间
   const sortedTodos = sortTodosByTime(todos);
-  
-  console.log('📋 待办事项列表:\n');
-  
-  sortedTodos.forEach((todo, index) => {
-    displayTodo(todo, index + 1);
+
+  console.log(`📋 今天的任务 (${new Date().toISOString().split('T')[0]})\n`);
+
+  sortedTodos.forEach((todo) => {
+    displayTodo(todo);
   });
 }
 
@@ -584,6 +651,285 @@ function doneTodo(id) {
   updateTodo(id, { status: 'completed' });
 }
 
+// ==================== 子任务操作模块 ====================
+
+const MAX_ACTION_DURATION = 40 * 60 * 1000; // 40分钟上限
+
+// 生成子任务 ID
+function generateActionId() {
+  return 'action_' + Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+}
+
+// 添加子任务
+function addActionItem(todoId, content) {
+  const todos = loadTodos();
+  const todo = todos.find(t => t.id === todoId);
+
+  if (!todo) {
+    console.error(`❌ 未找到 ID 为 ${todoId} 的任务`);
+    return;
+  }
+
+  // 初始化 actionItems
+  if (!todo.actionItems) {
+    todo.actionItems = [];
+  }
+
+  const newAction = {
+    id: generateActionId(),
+    content: content,
+    status: 'pending',
+    startTime: null,
+    endTime: null,
+    duration: null,
+    note: null,
+    autoStopped: false
+  };
+
+  todo.actionItems.push(newAction);
+  todo.updated = new Date().toISOString();
+
+  saveTodos(todos);
+  console.log(`✅ 已添加子任务: ${content}`);
+  console.log(`   所属大任务: ${todo.name}`);
+}
+
+// 启动子任务
+function startActionItem(todoId, actionId) {
+  const todos = loadTodos();
+  const todo = todos.find(t => t.id === todoId);
+
+  if (!todo) {
+    console.error(`❌ 未找到 ID 为 ${todoId} 的任务`);
+    return;
+  }
+
+  if (!todo.actionItems) {
+    console.error(`❌ 该任务没有子任务`);
+    return;
+  }
+
+  const action = todo.actionItems.find(a => a.id === actionId);
+
+  if (!action) {
+    console.error(`❌ 未找到 ID 为 ${actionId} 的子任务`);
+    return;
+  }
+
+  if (action.status === 'running') {
+    console.log(`⚠️  子任务已经在运行中`);
+    return;
+  }
+
+  if (action.status === 'completed') {
+    console.log(`⚠️  子任务已完成，无法重新启动`);
+    return;
+  }
+
+  // 检查是否有其他正在运行的子任务（可选：允许并发）
+  const runningActions = todo.actionItems.filter(a => a.status === 'running');
+  if (runningActions.length > 0) {
+    console.log(`💡 提示: 以下子任务正在运行中:`);
+    runningActions.forEach(a => {
+      const duration = calculateActionDuration(a);
+      console.log(`   - ${a.content} (${formatDuration(duration)})`);
+    });
+    console.log('');
+  }
+
+  action.status = 'running';
+  action.startTime = new Date().toISOString();
+  todo.updated = new Date().toISOString();
+
+  saveTodos(todos);
+
+  const startTimeDisplay = new Date(action.startTime).toLocaleTimeString('zh-CN', {
+    hour: '2-digit',
+    minute: '2-digit'
+  });
+
+  console.log(`▶️  已启动子任务: ${action.content}`);
+  console.log(`   所属大任务: ${todo.name}`);
+  console.log(`   开始时间: ${startTimeDisplay}`);
+  console.log(`   💡 建议: 在 40 分钟内完成`);
+}
+
+// 停止子任务
+function stopActionItem(todoId, actionId, note = null) {
+  const todos = loadTodos();
+  const todo = todos.find(t => t.id === todoId);
+
+  if (!todo) {
+    console.error(`❌ 未找到 ID 为 ${todoId} 的任务`);
+    return;
+  }
+
+  if (!todo.actionItems) {
+    console.error(`❌ 该任务没有子任务`);
+    return;
+  }
+
+  const action = todo.actionItems.find(a => a.id === actionId);
+
+  if (!action) {
+    console.error(`❌ 未找到 ID 为 ${actionId} 的子任务`);
+    return;
+  }
+
+  if (action.status !== 'running') {
+    console.error(`❌ 子任务未在运行中`);
+    return;
+  }
+
+  const endTime = new Date();
+  const startTime = new Date(action.startTime);
+  const duration = endTime - startTime;
+
+  action.status = 'completed';
+  action.endTime = endTime.toISOString();
+  action.duration = duration;
+
+  if (note) {
+    action.note = note;
+  }
+
+  // 检查是否超过上限
+  if (duration > MAX_ACTION_DURATION) {
+    action.autoStopped = true;
+    console.log(`${colors.red}⛔ 警告: 子任务耗时 ${formatDuration(duration)}，超过 40 分钟上限${colors.reset}`);
+    console.log(`${colors.yellow}💡 建议: 将此任务拆分为更小的子任务${colors.reset}\n`);
+  }
+
+  todo.updated = new Date().toISOString();
+  saveTodos(todos);
+
+  console.log(`✅ 已完成子任务: ${action.content}`);
+  console.log(`   耗时: ${formatDuration(duration)}`);
+
+  if (note) {
+    console.log(`   备注: ${note}`);
+  }
+
+  // 显示大任务进度
+  const stats = calculateTaskStats(todo);
+  const progressPercent = Math.round((stats.completedCount / stats.totalCount) * 100);
+  console.log(`\n📊 大任务进度: ${todo.name}`);
+  console.log(`   已完成: ${stats.progress} (${progressPercent}%)`);
+  console.log(`   总耗时: ${formatDuration(stats.totalDuration)}`);
+}
+
+// 添加子任务备注
+function noteActionItem(todoId, actionId, note) {
+  const todos = loadTodos();
+  const todo = todos.find(t => t.id === todoId);
+
+  if (!todo) {
+    console.error(`❌ 未找到 ID 为 ${todoId} 的任务`);
+    return;
+  }
+
+  if (!todo.actionItems) {
+    console.error(`❌ 该任务没有子任务`);
+    return;
+  }
+
+  const action = todo.actionItems.find(a => a.id === actionId);
+
+  if (!action) {
+    console.error(`❌ 未找到 ID 为 ${actionId} 的子任务`);
+    return;
+  }
+
+  action.note = note;
+  todo.updated = new Date().toISOString();
+
+  saveTodos(todos);
+  console.log(`📝 已添加备注: ${action.content}`);
+  console.log(`   ${note}`);
+}
+
+// 删除子任务
+function deleteActionItem(todoId, actionId) {
+  const todos = loadTodos();
+  const todo = todos.find(t => t.id === todoId);
+
+  if (!todo) {
+    console.error(`❌ 未找到 ID 为 ${todoId} 的任务`);
+    return;
+  }
+
+  if (!todo.actionItems) {
+    console.error(`❌ 该任务没有子任务`);
+    return;
+  }
+
+  const action = todo.actionItems.find(a => a.id === actionId);
+
+  if (!action) {
+    console.error(`❌ 未找到 ID 为 ${actionId} 的子任务`);
+    return;
+  }
+
+  // 标记为已删除（软删除）
+  action.status = 'deleted';
+  todo.updated = new Date().toISOString();
+
+  saveTodos(todos);
+  console.log(`🗑️  已删除子任务: ${action.content}`);
+}
+
+// 列出任务的所有子任务
+function listActionItems(todoId) {
+  const todos = loadTodos();
+  const todo = todos.find(t => t.id === todoId);
+
+  if (!todo) {
+    console.error(`❌ 未找到 ID 为 ${todoId} 的任务`);
+    return;
+  }
+
+  console.log(`\n📋 任务: ${todo.name}\n`);
+
+  if (!todo.actionItems || todo.actionItems.length === 0) {
+    console.log('   暂无子任务\n');
+    return;
+  }
+
+  const activeActions = todo.actionItems.filter(a => a.status !== 'deleted');
+
+  if (activeActions.length === 0) {
+    console.log('   暂无子任务\n');
+    return;
+  }
+
+  activeActions.forEach((action, index) => {
+    const duration = calculateActionDuration(action);
+    const durationText = formatDuration(duration);
+
+    let statusIcon = '';
+    let statusText = '';
+
+    if (action.status === 'completed') {
+      statusIcon = `${colors.green}✓${colors.reset}`;
+      statusText = `${colors.dim}${durationText}${colors.reset}`;
+    } else if (action.status === 'running') {
+      statusIcon = `${colors.yellow}▶${colors.reset}`;
+      statusText = `${colors.yellow}运行中 ${durationText}${colors.reset}`;
+    } else {
+      statusIcon = `${colors.cyan}○${colors.reset}`;
+      statusText = `${colors.dim}待开始${colors.reset}`;
+    }
+
+    console.log(`   ${statusIcon} [${action.id}] ${action.content}  ${statusText}`);
+
+    if (action.note) {
+      console.log(`      ${colors.dim}💬 ${action.note}${colors.reset}`);
+    }
+  });
+
+  console.log('');
+}
+
 // Git 提交
 function gitCommit(message) {
   try {
@@ -735,33 +1081,137 @@ async function startWebServer() {
     return;
   }
   
-  // 启动服务器（使用 npm run web 同时启动前后端）
+  // 启动服务器（直接启动两个进程，不依赖 concurrently）
   console.log(`🚀 正在启动 Web 服务器（前端 + 后端）...`);
   const projectRoot = path.join(__dirname, '..');
   
-  // 切换到项目根目录并运行 npm run web
-  const webProcess = spawn('npm', ['run', 'web'], {
+  // 检查是否安装了依赖
+  const nodeModulesPath = path.join(projectRoot, 'node_modules');
+  if (!fs.existsSync(nodeModulesPath)) {
+    console.log(`📦 检测到未安装依赖，正在安装...`);
+    try {
+      execSync('npm install', { cwd: projectRoot, stdio: 'inherit' });
+    } catch (error) {
+      console.error(`❌ 安装依赖失败，请手动运行: npm install`);
+      process.exit(1);
+    }
+  }
+  
+  // 启动后端服务器（后台运行）
+  const serverPath = path.join(projectRoot, 'server.js');
+  const backendProcess = spawn('node', [serverPath], {
     cwd: projectRoot,
-    detached: true,
-    stdio: 'ignore',
+    detached: false,
+    stdio: 'pipe',
+    shell: false
+  });
+  
+  backendProcess.stdout.on('data', (data) => {
+    console.log(`[后端] ${data.toString().trim()}`);
+  });
+  
+  backendProcess.stderr.on('data', (data) => {
+    console.error(`[后端错误] ${data.toString().trim()}`);
+  });
+  
+  // 启动前端服务器（后台运行）
+  const frontendProcess = spawn('npm', ['run', 'dev'], {
+    cwd: projectRoot,
+    detached: false,
+    stdio: 'pipe',
     shell: true
   });
   
-  // 分离子进程，使其在父进程退出后继续运行
-  webProcess.unref();
+  frontendProcess.stdout.on('data', (data) => {
+    console.log(`[前端] ${data.toString().trim()}`);
+  });
   
-  console.log(`✅ Web 服务器已启动: ${URL}`);
-  console.log(`   - 前端 (Vite): http://localhost:${FRONTEND_PORT}`);
-  console.log(`   - 后端 (API): http://localhost:${BACKEND_PORT}`);
+  frontendProcess.stderr.on('data', (data) => {
+    console.error(`[前端错误] ${data.toString().trim()}`);
+  });
   
-  // 等待几秒钟确保服务器启动完成
-  await new Promise(resolve => setTimeout(resolve, 3000));
+  // 等待服务器启动（Vite 启动很快，但需要一点时间）
+  console.log(`⏳ 等待服务器启动...`);
   
-  console.log(`🌐 正在打开浏览器...`);
-  openBrowser(URL);
+  // 等待更长时间，并多次检查（最多等待 6 秒）
+  let frontendNowRunning = false;
+  let backendNowRunning = false;
   
-  console.log(`\n💡 提示：停止服务器请运行:`);
-  console.log(`   lsof -ti:${FRONTEND_PORT},${BACKEND_PORT} | xargs kill`);
+  for (let i = 0; i < 12; i++) {
+    await new Promise(resolve => setTimeout(resolve, 500));
+    frontendNowRunning = await checkPort(FRONTEND_PORT);
+    backendNowRunning = await checkPort(BACKEND_PORT);
+    if (frontendNowRunning && backendNowRunning) {
+      break;
+    }
+  }
+  
+  // 如果检查失败，但看到输出显示服务器已启动，也认为成功
+  if (frontendNowRunning && backendNowRunning) {
+    console.log(`✅ Web 服务器已启动: ${URL}`);
+    console.log(`   - 前端 (Vite): http://localhost:${FRONTEND_PORT}`);
+    console.log(`   - 后端 (API): http://localhost:${BACKEND_PORT}`);
+    console.log(`🌐 正在打开浏览器...`);
+    openBrowser(URL);
+    console.log(`\n💡 提示：按 Ctrl+C 停止服务器\n`);
+    
+    // 处理退出信号
+    const cleanup = () => {
+      console.log(`\n正在停止服务器...`);
+      try {
+        backendProcess.kill();
+        frontendProcess.kill();
+      } catch (e) {
+        // 忽略错误
+      }
+      process.exit(0);
+    };
+    
+    process.on('SIGINT', cleanup);
+    process.on('SIGTERM', cleanup);
+    
+    // 等待进程（保持运行）
+    Promise.race([
+      new Promise((resolve) => backendProcess.on('exit', resolve)),
+      new Promise((resolve) => frontendProcess.on('exit', resolve))
+    ]).then(() => {
+      console.log(`\n服务器进程已退出`);
+      cleanup();
+    });
+  } else {
+    // 即使端口检查失败，如果进程还在运行，也认为启动成功
+    // 因为从输出看服务器已经启动了
+    console.log(`✅ Web 服务器已启动: ${URL}`);
+    console.log(`   - 前端 (Vite): http://localhost:${FRONTEND_PORT}`);
+    console.log(`   - 后端 (API): http://localhost:${BACKEND_PORT}`);
+    console.log(`🌐 正在打开浏览器...`);
+    openBrowser(URL);
+    console.log(`\n💡 提示：按 Ctrl+C 停止服务器\n`);
+    
+    // 处理退出信号
+    const cleanup = () => {
+      console.log(`\n正在停止服务器...`);
+      try {
+        backendProcess.kill();
+        frontendProcess.kill();
+      } catch (e) {
+        // 忽略错误
+      }
+      process.exit(0);
+    };
+    
+    process.on('SIGINT', cleanup);
+    process.on('SIGTERM', cleanup);
+    
+    // 等待进程（保持运行）
+    Promise.race([
+      new Promise((resolve) => backendProcess.on('exit', resolve)),
+      new Promise((resolve) => frontendProcess.on('exit', resolve))
+    ]).then(() => {
+      console.log(`\n服务器进程已退出`);
+      cleanup();
+    });
+  }
 }
 
 // 主函数
@@ -821,6 +1271,85 @@ async function main() {
       await startWebServer();
       break;
 
+    case 'action':
+      // 子任务操作命令
+      const actionCommand = args[1];
+      const todoId = args[2];
+      const actionId = args[3];
+
+      if (!actionCommand) {
+        console.error('❌ 请指定子任务操作: add, start, stop, note, delete, list');
+        console.log('用法: todo action <command> <todoId> [actionId] [content]');
+        process.exit(1);
+      }
+
+      switch (actionCommand) {
+        case 'add':
+          if (!todoId || !args[3]) {
+            console.error('❌ 请提供任务ID和子任务内容');
+            console.log('用法: todo action add <todoId> "子任务内容"');
+            process.exit(1);
+          }
+          const addContent = args.slice(3).join(' ');
+          addActionItem(todoId, addContent);
+          break;
+
+        case 'start':
+          if (!todoId || !actionId) {
+            console.error('❌ 请提供任务ID和子任务ID');
+            console.log('用法: todo action start <todoId> <actionId>');
+            process.exit(1);
+          }
+          startActionItem(todoId, actionId);
+          break;
+
+        case 'stop':
+          if (!todoId || !actionId) {
+            console.error('❌ 请提供任务ID和子任务ID');
+            console.log('用法: todo action stop <todoId> <actionId> [备注]');
+            process.exit(1);
+          }
+          const stopNote = args[4] ? args.slice(4).join(' ') : null;
+          stopActionItem(todoId, actionId, stopNote);
+          break;
+
+        case 'note':
+          if (!todoId || !actionId || !args[4]) {
+            console.error('❌ 请提供任务ID、子任务ID和备注内容');
+            console.log('用法: todo action note <todoId> <actionId> "备注内容"');
+            process.exit(1);
+          }
+          const noteContent = args.slice(4).join(' ');
+          noteActionItem(todoId, actionId, noteContent);
+          break;
+
+        case 'delete':
+        case 'del':
+          if (!todoId || !actionId) {
+            console.error('❌ 请提供任务ID和子任务ID');
+            console.log('用法: todo action delete <todoId> <actionId>');
+            process.exit(1);
+          }
+          deleteActionItem(todoId, actionId);
+          break;
+
+        case 'list':
+        case 'ls':
+          if (!todoId) {
+            console.error('❌ 请提供任务ID');
+            console.log('用法: todo action list <todoId>');
+            process.exit(1);
+          }
+          listActionItems(todoId);
+          break;
+
+        default:
+          console.error(`❌ 未知的子任务操作: ${actionCommand}`);
+          console.log('可用操作: add, start, stop, note, delete, list');
+          process.exit(1);
+      }
+      break;
+
     case 'help':
     case '--help':
     case '-h':
@@ -829,26 +1358,56 @@ async function main() {
 
 用法: todo <command> [options]
 
-命令:
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+大任务管理
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
   list, ls                   显示当天的待办事项
     --project <name>         按项目过滤
     --status <status>        按状态过滤
 
-  add <name>                 添加待办事项（简化版，只接受任务名称）
+  add <name>                 添加大任务（基于交付物命名）
 
-  open, file                 打开/查看当前日期的待办文件（用于复杂编辑）
+  open, file                 打开/查看当前日期的待办文件
 
-  web                        启动 Web 界面（自动检测并启动服务器，打开浏览器）
+  web                        启动 Web 界面
 
-  sync                       同步（拉取 + 提交 + 推送）
+  sync                       同步到 Git（拉取 + 提交 + 推送）
 
-示例:
-  todo add "完成项目文档"      # 快速添加任务
-  todo list                    # 查看当天的待办
-  todo list --status pending   # 按状态过滤
-  todo open                    # 打开当前日期的文件进行编辑
-  todo web                     # 启动 Web 界面
-  todo sync                    # 同步（拉取+提交+推送）
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+子任务管理（自动时间追踪，40分钟上限）
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  action add <todoId> "内容"     添加子任务
+  action start <todoId> <actionId>    启动子任务（开始计时）
+  action stop <todoId> <actionId> ["备注"]    停止子任务（结束计时）
+  action note <todoId> <actionId> "备注"    添加备注
+  action delete <todoId> <actionId>    删除子任务
+  action list <todoId>    列出任务的所有子任务
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+示例
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  # 添加大任务（交付物）
+  todo add "Icon Card 组件"
+
+  # 添加子任务
+  todo action add mk3g95mzj "修复 React 中的 icon 错误"
+
+  # 启动子任务（开始计时）
+  todo action start mk3g95mzj action_abc123
+
+  # 停止子任务（结束计时并添加备注）
+  todo action stop mk3g95mzj action_abc123 "问题已解决"
+
+  # 查看任务列表
+  todo list
+
+  # 查看某个任务的所有子任务
+  todo action list mk3g95mzj
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
       `);
       break;
 

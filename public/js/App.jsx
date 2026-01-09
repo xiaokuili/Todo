@@ -10,6 +10,8 @@ export function App() {
     return new Date().toISOString().split('T')[0];
   });
   const [loading, setLoading] = useState(true);
+  const [isQuickAdding, setIsQuickAdding] = useState(false);
+  const [quickTaskName, setQuickTaskName] = useState('');
 
   const loadTodos = async () => {
     try {
@@ -31,11 +33,16 @@ export function App() {
   }, []);
 
   const handleAddTodo = async () => {
-    const name = prompt('输入新任务名称:', '新任务');
-    if (!name) return;
+    setIsQuickAdding(true);
+  };
+
+  const handleQuickAdd = async () => {
+    if (!quickTaskName.trim()) return;
 
     const date = selectedDate || new Date().toISOString().split('T')[0];
-    await api.createTodo({ name, date, status: 'pending' });
+    await api.createTodo({ name: quickTaskName.trim(), date, status: 'pending' });
+    setQuickTaskName('');
+    setIsQuickAdding(false);
     await loadTodos();
   };
 
@@ -96,14 +103,14 @@ export function App() {
   }
 
   return (
-    <div className="min-h-screen bg-[#f8fafc]">
-      <div className="max-w-7xl mx-auto flex flex-col lg:flex-row gap-6 p-4 md:p-8">
+    <div className="min-h-screen bg-slate-50">
+      <div className="max-w-5xl mx-auto flex flex-col lg:flex-row gap-4 p-4">
         {/* 左侧：日历筛选 */}
-        <aside className="w-full lg:w-80 flex-shrink-0">
-          <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 sticky top-8">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-bold flex items-center gap-2">
-                <CalendarIcon className="w-5 h-5" />
+        <aside className="w-full lg:w-64 flex-shrink-0">
+          <div className="bg-white border border-slate-200 rounded-md p-4 sticky top-4">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-sm font-bold flex items-center gap-2">
+                <CalendarIcon className="w-4 h-4" />
                 日历
               </h2>
               <button
@@ -117,10 +124,10 @@ export function App() {
             {/* 迷你日历 */}
             <Calendar todos={todos} selectedDate={selectedDate} onSelectDate={setSelectedDate} />
 
-            <div className="mt-8">
+            <div className="mt-6">
               <button
                 onClick={handleAddTodo}
-                className="w-full bg-slate-900 text-white py-3 rounded-xl font-medium hover:bg-slate-800 transition-all flex items-center justify-center gap-2 shadow-sm"
+                className="w-full bg-slate-900 text-white py-2 font-medium hover:bg-slate-700 transition-all flex items-center justify-center gap-2 text-sm"
               >
                 <Plus className="w-4 h-4" />
                 新建任务
@@ -131,11 +138,49 @@ export function App() {
 
         {/* 右侧：TodoList 展示 */}
         <main className="flex-1 min-w-0">
-          <header className="mb-6">
-            <h1 id="list-title" className="text-2xl font-extrabold text-slate-900">
+          {/* 快速添加任务 */}
+          {isQuickAdding && (
+            <div className="bg-white border border-slate-900 rounded-md mb-4 p-3">
+              <input
+                type="text"
+                value={quickTaskName}
+                onChange={(e) => setQuickTaskName(e.target.value)}
+                placeholder="新任务名称（交付物）..."
+                className="w-full text-sm px-2 py-1 border-b border-slate-300 focus:outline-none focus:border-slate-900"
+                autoFocus
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') handleQuickAdd();
+                  if (e.key === 'Escape') {
+                    setIsQuickAdding(false);
+                    setQuickTaskName('');
+                  }
+                }}
+              />
+              <div className="flex gap-2 mt-2">
+                <button
+                  onClick={handleQuickAdd}
+                  className="text-xs px-3 py-1 bg-slate-900 text-white hover:bg-slate-700"
+                >
+                  创建
+                </button>
+                <button
+                  onClick={() => {
+                    setIsQuickAdding(false);
+                    setQuickTaskName('');
+                  }}
+                  className="text-xs px-3 py-1 text-slate-600 hover:text-slate-900"
+                >
+                  取消
+                </button>
+              </div>
+            </div>
+          )}
+
+          <header className="mb-4">
+            <h1 id="list-title" className="text-xl font-bold text-slate-900">
               {title}
             </h1>
-            <p id="list-subtitle" className="text-sm text-slate-500 mt-1">
+            <p id="list-subtitle" className="text-xs text-slate-500 mt-1">
               {subtitle}
             </p>
           </header>
