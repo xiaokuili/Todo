@@ -112,9 +112,9 @@ export function TaskRow({ todo, onUpdate, onDelete }) {
   const hasSteps = activeSteps.length > 0;
 
   return (
-    <div className={`mb-3 border border-slate-200 rounded-lg overflow-hidden ${isCurrentTask ? 'bg-yellow-50' : 'bg-white'}`}>
+    <div className={`task-card mb-4 rounded-2xl overflow-hidden shadow-lg ${isCurrentTask ? 'bg-gradient-to-br from-amber-50 to-yellow-50 border-2 border-amber-300 floating' : 'glass-card'}`}>
       {/* 主任务行 */}
-      <div className="flex items-center gap-3 py-3 px-3 group/task">
+      <div className="flex items-center gap-3 py-4 px-5 group/task">
         {/* 时间 - 只在有时间或正在编辑时显示 */}
         {isEditingTime ? (
           <div className="flex items-center gap-1 font-mono text-sm flex-shrink-0">
@@ -123,16 +123,16 @@ export function TaskRow({ todo, onUpdate, onDelete }) {
               value={timeStart}
               onChange={(e) => setTimeStart(e.target.value)}
               placeholder="09:00"
-              className="w-14 px-1 text-center border-b border-slate-300 focus:outline-none focus:border-slate-900"
+              className="w-16 px-2 py-1 text-center border-b-2 border-purple-300 focus:outline-none focus:border-purple-600 bg-white/50 rounded-lg"
               autoFocus
             />
-            <span>-</span>
+            <span className="text-slate-500">-</span>
             <input
               type="text"
               value={timeEnd}
               onChange={(e) => setTimeEnd(e.target.value)}
               placeholder="10:00"
-              className="w-14 px-1 text-center border-b border-slate-300 focus:outline-none focus:border-slate-900"
+              className="w-16 px-2 py-1 text-center border-b-2 border-purple-300 focus:outline-none focus:border-purple-600 bg-white/50 rounded-lg"
               onKeyDown={(e) => {
                 if (e.key === 'Enter') handleSaveTime();
                 if (e.key === 'Escape') setIsEditingTime(false);
@@ -143,7 +143,7 @@ export function TaskRow({ todo, onUpdate, onDelete }) {
         ) : hasTime ? (
           <button
             onClick={() => setIsEditingTime(true)}
-            className="font-mono text-sm text-slate-600 hover:text-slate-900 flex-shrink-0"
+            className="font-mono text-sm font-semibold bg-gradient-to-r from-purple-500 to-indigo-600 text-white px-3 py-1.5 rounded-lg hover:shadow-lg transition-all flex-shrink-0"
           >
             {timeDisplay}
           </button>
@@ -152,12 +152,14 @@ export function TaskRow({ todo, onUpdate, onDelete }) {
         {/* 状态图标 */}
         <button
           onClick={handleCycleStatus}
-          className="flex-shrink-0 text-slate-400 hover:text-slate-900 transition-colors"
+          className="flex-shrink-0 text-slate-400 hover:scale-110 transition-transform"
         >
           {isCompleted ? (
-            <Check className="w-4 h-4 text-green-600" />
+            <div className="bg-gradient-to-br from-green-400 to-emerald-500 rounded-full p-1">
+              <Check className="w-5 h-5 text-white" />
+            </div>
           ) : (
-            <Circle className="w-4 h-4" />
+            <Circle className="w-5 h-5 hover:text-purple-600" />
           )}
         </button>
 
@@ -176,7 +178,7 @@ export function TaskRow({ todo, onUpdate, onDelete }) {
               if (e.key === 'Escape') setIsEditingName(false);
             }}
             onBlur={handleSaveName}
-            className="flex-1 text-sm font-medium px-2 py-0.5 border-b border-slate-300 focus:outline-none focus:border-slate-900"
+            className="flex-1 text-base font-semibold px-3 py-2 border-b-2 border-purple-400 focus:outline-none focus:border-purple-600 bg-white/50 rounded-lg"
             autoFocus
           />
         ) : (
@@ -189,10 +191,10 @@ export function TaskRow({ todo, onUpdate, onDelete }) {
               }
             }}
             tabIndex={0}
-            className={`flex-1 text-sm font-medium ${
+            className={`flex-1 text-base font-semibold ${
               isCompleted
                 ? 'line-through text-slate-400'
-                : 'text-slate-900 cursor-pointer hover:text-slate-600 focus:outline-none focus:ring-1 focus:ring-slate-300'
+                : 'text-slate-900 cursor-pointer hover:text-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-300 rounded px-1'
             }`}
           >
             {todo.name || '未命名任务'}
@@ -201,7 +203,7 @@ export function TaskRow({ todo, onUpdate, onDelete }) {
 
         {/* 项目标签 */}
         {todo.project && (
-          <span className="text-xs text-purple-700 bg-purple-50 px-2 py-0.5 rounded">
+          <span className="text-xs font-bold text-white bg-gradient-to-r from-purple-500 to-pink-500 px-3 py-1.5 rounded-full shadow-md">
             #{todo.project}
           </span>
         )}
@@ -211,13 +213,13 @@ export function TaskRow({ todo, onUpdate, onDelete }) {
           {hasSteps && (
             <button
               onClick={() => setIsExpanded(!isExpanded)}
-              className="text-slate-400 hover:text-slate-900 transition-colors"
+              className="text-slate-400 hover:text-purple-600 hover:bg-purple-100 p-1.5 rounded-lg transition-all"
               title={isExpanded ? '折叠子任务' : '展开子任务'}
             >
-              {isExpanded ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+              {isExpanded ? <ChevronDown className="w-5 h-5" /> : <ChevronRight className="w-5 h-5" />}
             </button>
           )}
-          <div className="text-xs text-slate-400 opacity-0 group-hover/task:opacity-100 transition-opacity">
+          <div className="text-xs text-slate-400 opacity-0 group-hover/task:opacity-100 transition-opacity bg-slate-100 px-2 py-1 rounded-lg font-medium">
             <span>回车:步骤</span>
           </div>
         </div>
@@ -225,7 +227,7 @@ export function TaskRow({ todo, onUpdate, onDelete }) {
 
       {/* 子任务区域 */}
       {isExpanded && (hasSteps || isAddingStep) && (
-        <div className="pt-3 border-t border-slate-100">
+        <div className="pt-4 pb-2 border-t-2 border-slate-100/50 bg-slate-50/30">
           {/* 子任务列表 */}
           {activeSteps.map(action => (
             <StepItem
@@ -240,13 +242,13 @@ export function TaskRow({ todo, onUpdate, onDelete }) {
 
           {/* 添加步骤输入框 */}
           {isAddingStep ? (
-            <div className="mx-3 mb-2 p-3 bg-white border border-slate-300 rounded-lg">
+            <div className="mx-4 mb-3 p-4 bg-white/80 backdrop-blur border-2 border-purple-300 rounded-xl shadow-md">
               <input
                 type="text"
                 value={newStepContent}
                 onChange={(e) => setNewStepContent(e.target.value)}
                 placeholder="新步骤（建议 40 分钟内完成）..."
-                className="w-full text-sm px-2 py-1 border-b border-slate-300 focus:outline-none focus:border-slate-900"
+                className="w-full text-sm font-medium px-3 py-2 border-b-2 border-purple-300 focus:outline-none focus:border-purple-600 bg-transparent"
                 autoFocus
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') handleAddStep();
@@ -256,10 +258,10 @@ export function TaskRow({ todo, onUpdate, onDelete }) {
                   }
                 }}
               />
-              <div className="flex gap-2 mt-2">
+              <div className="flex gap-2 mt-3">
                 <button
                   onClick={handleAddStep}
-                  className="text-xs px-3 py-1 bg-slate-900 text-white rounded hover:bg-slate-700"
+                  className="text-xs px-4 py-2 btn-gradient rounded-lg font-semibold shadow-md"
                 >
                   添加
                 </button>
@@ -268,7 +270,7 @@ export function TaskRow({ todo, onUpdate, onDelete }) {
                     setIsAddingStep(false);
                     setNewStepContent('');
                   }}
-                  className="text-xs px-3 py-1 text-slate-600 hover:text-slate-900"
+                  className="text-xs px-4 py-2 text-slate-600 hover:text-slate-900 hover:bg-slate-200 rounded-lg font-medium"
                 >
                   取消
                 </button>
@@ -277,9 +279,9 @@ export function TaskRow({ todo, onUpdate, onDelete }) {
           ) : (
             <button
               onClick={() => setIsAddingStep(true)}
-              className="mx-3 mb-2 flex items-center gap-2 text-sm text-slate-400 hover:text-slate-900 transition-colors"
+              className="mx-4 mb-3 flex items-center gap-2 text-sm text-slate-500 hover:text-purple-700 hover:bg-purple-50 px-3 py-2 rounded-lg transition-all font-medium"
             >
-              <Plus className="w-4 h-4" />
+              <Plus className="w-5 h-5" />
               <span>添加子任务</span>
             </button>
           )}

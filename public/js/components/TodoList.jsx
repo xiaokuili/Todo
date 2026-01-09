@@ -85,9 +85,12 @@ export function TodoList({ todos, selectedDate, onUpdate, onDelete }) {
 
   if (filteredTodos.length === 0) {
     return (
-      <div className="bg-white border border-slate-200 rounded-md p-12 text-center">
+      <div className="glass-card rounded-2xl p-16 text-center shadow-lg">
+        <div className="text-slate-500 text-base font-medium mb-3">
+          {selectedDate ? '📭 该日期没有待办事项' : '✨ 开始规划你的一天'}
+        </div>
         <div className="text-slate-400 text-sm">
-          {selectedDate ? '该日期没有待办事项' : '点击左侧的"新建任务"按钮开始创建任务'}
+          {!selectedDate && '点击左侧的"新建任务"按钮开始创建任务'}
         </div>
       </div>
     );
@@ -114,10 +117,10 @@ export function TodoList({ todos, selectedDate, onUpdate, onDelete }) {
         const sorted = sortTodosByTime(dateTodos);
 
         return (
-          <div key={dateKey} className="mb-6">
-            <div className="flex items-center justify-between px-1 py-2 mb-3">
-              <h2 className="text-sm font-bold text-slate-800">{formatDateHeader(dateKey)}</h2>
-              <span className="text-xs text-slate-500">{dateTodos.length} 个任务</span>
+          <div key={dateKey} className="mb-8">
+            <div className="glass-card rounded-2xl px-5 py-3 mb-4 shadow-md flex items-center justify-between">
+              <h2 className="text-base font-bold gradient-text">{formatDateHeader(dateKey)}</h2>
+              <span className="text-xs font-semibold bg-purple-100 text-purple-700 px-3 py-1 rounded-full">{dateTodos.length} 个任务</span>
             </div>
             {sorted.map((todo) => (
               <TaskRow key={todo.id} todo={todo} onUpdate={onUpdate} onDelete={onDelete} />

@@ -107,7 +107,7 @@ export function StepItem({ action, onStart, onStop, onUpdate, onDelete }) {
 
   if (isEditingContent) {
     return (
-      <div className="mx-3 mb-2 p-3 bg-white border border-slate-900 rounded-lg">
+      <div className="mx-4 mb-3 p-4 bg-white/90 backdrop-blur border-2 border-purple-500 rounded-xl shadow-lg">
         <input
           type="text"
           value={contentText}
@@ -117,7 +117,7 @@ export function StepItem({ action, onStart, onStop, onUpdate, onDelete }) {
             if (e.key === 'Escape') setIsEditingContent(false);
           }}
           onBlur={handleSaveContent}
-          className="w-full text-sm px-2 py-0.5 border-b border-slate-300 focus:outline-none focus:border-slate-900"
+          className="w-full text-sm font-medium px-3 py-2 border-b-2 border-purple-400 focus:outline-none focus:border-purple-600 bg-transparent"
           autoFocus
         />
       </div>
@@ -126,20 +126,20 @@ export function StepItem({ action, onStart, onStop, onUpdate, onDelete }) {
 
   // 状态颜色
   const statusColors = {
-    pending: 'border-slate-200 bg-white hover:border-slate-300',
-    running: 'border-yellow-400 bg-yellow-50',
-    completed: 'border-green-200 bg-green-50',
+    pending: 'border-2 border-slate-200 bg-white hover:border-purple-300 hover:shadow-md',
+    running: 'border-2 border-amber-400 bg-gradient-to-br from-amber-50 to-yellow-50 shadow-lg pulse-ring',
+    completed: 'border-2 border-emerald-300 bg-gradient-to-br from-green-50 to-emerald-50',
   };
 
   const statusIconColors = {
-    pending: 'text-slate-400',
-    running: 'text-yellow-600',
-    completed: 'text-green-600',
+    pending: 'text-slate-400 hover:text-purple-600',
+    running: 'text-amber-600',
+    completed: 'text-emerald-600',
   };
 
   return (
     <div
-      className={`group/step mx-3 mb-2 p-3 border rounded-lg transition-all ${statusColors[action.status]}`}
+      className={`group/step mx-4 mb-3 p-4 rounded-xl transition-all ${statusColors[action.status]}`}
       onKeyDown={handleKeyDown}
       tabIndex={0}
     >
@@ -147,16 +147,22 @@ export function StepItem({ action, onStart, onStop, onUpdate, onDelete }) {
         {/* 状态图标 */}
         <button
           onClick={action.status === 'running' ? handleStop : handleStart}
-          className={`flex-shrink-0 ${statusIconColors[action.status]} hover:opacity-70 transition-opacity mt-0.5`}
+          className={`flex-shrink-0 ${statusIconColors[action.status]} hover:scale-110 transition-all mt-0.5`}
           disabled={action.status === 'completed'}
           tabIndex={-1}
         >
           {action.status === 'completed' ? (
-            <Check className="w-5 h-5" />
+            <div className="bg-gradient-to-br from-green-400 to-emerald-500 rounded-full p-1 shadow-md">
+              <Check className="w-5 h-5 text-white" />
+            </div>
           ) : action.status === 'running' ? (
-            <Square className="w-5 h-5 fill-current" />
+            <div className="bg-gradient-to-br from-amber-400 to-orange-500 rounded-lg p-1 shadow-md">
+              <Square className="w-5 h-5 text-white fill-current" />
+            </div>
           ) : (
-            <Play className="w-5 h-5" />
+            <div className="hover:bg-purple-100 rounded-full p-1 transition-all">
+              <Play className="w-5 h-5" />
+            </div>
           )}
         </button>
 
@@ -165,10 +171,10 @@ export function StepItem({ action, onStart, onStop, onUpdate, onDelete }) {
           {/* 任务标题 */}
           <div
             onClick={() => action.status !== 'completed' && setIsEditingContent(true)}
-            className={`text-sm font-medium mb-1 ${
+            className={`text-sm font-semibold mb-2 ${
               action.status === 'completed'
                 ? 'line-through text-slate-400'
-                : 'text-slate-900 cursor-pointer'
+                : 'text-slate-900 cursor-pointer hover:text-purple-700'
             }`}
           >
             {action.content}
@@ -178,9 +184,9 @@ export function StepItem({ action, onStart, onStop, onUpdate, onDelete }) {
           {action.note && !isEditingNote && (
             <div
               onClick={() => action.status !== 'completed' && setIsEditingNote(true)}
-              className="text-xs text-slate-500 mb-2 cursor-pointer hover:text-slate-700"
+              className="text-xs text-slate-600 mb-2 cursor-pointer hover:text-slate-800 bg-slate-100/50 px-2 py-1 rounded-lg inline-block"
             >
-              {action.note}
+              💭 {action.note}
             </div>
           )}
 
@@ -192,7 +198,7 @@ export function StepItem({ action, onStart, onStop, onUpdate, onDelete }) {
                 value={noteText}
                 onChange={(e) => setNoteText(e.target.value)}
                 placeholder="添加备注..."
-                className="w-full text-xs px-2 py-1 border border-slate-300 rounded focus:outline-none focus:ring-1 focus:ring-slate-900"
+                className="w-full text-xs px-3 py-2 border-2 border-purple-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 bg-white font-medium"
                 autoFocus
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') handleSaveNote();
@@ -207,34 +213,34 @@ export function StepItem({ action, onStart, onStop, onUpdate, onDelete }) {
           )}
 
           {/* 底部信息栏 */}
-          <div className="flex items-center gap-3 text-xs">
+          <div className="flex items-center gap-3 text-xs flex-wrap">
             {/* 时间信息 */}
             {action.status === 'running' && (
-              <div className="flex items-center gap-1 text-yellow-700 font-medium">
-                <Clock className="w-3 h-3" />
-                <span className="font-mono">{formatDuration(duration)}</span>
-                {isOvertime && <span className="text-red-600 ml-1">⚠ 超时</span>}
+              <div className="flex items-center gap-2 bg-amber-100 text-amber-800 font-bold px-3 py-1.5 rounded-full shadow-sm">
+                <Clock className="w-4 h-4" />
+                <span className="font-mono text-sm">{formatDuration(duration)}</span>
+                {isOvertime && <span className="text-red-600 ml-1 font-bold">⚠️ 超时</span>}
               </div>
             )}
 
             {action.status === 'completed' && action.endTime && (
-              <div className="flex items-center gap-2 text-slate-500">
-                <span>{formatDateTime(action.endTime)}</span>
+              <div className="flex items-center gap-3 text-slate-600 font-medium">
+                <span className="bg-slate-100 px-2 py-1 rounded-lg">{formatDateTime(action.endTime)}</span>
                 {action.duration && (
-                  <span className="font-mono text-green-600">
-                    {formatDuration(action.duration)}
+                  <span className="font-mono bg-gradient-to-r from-green-100 to-emerald-100 text-green-700 px-3 py-1 rounded-full font-bold shadow-sm">
+                    ⏱️ {formatDuration(action.duration)}
                   </span>
                 )}
               </div>
             )}
 
             {action.status === 'pending' && (
-              <span className="text-slate-400">待开始</span>
+              <span className="text-slate-500 bg-slate-100 px-3 py-1 rounded-full font-medium">待开始</span>
             )}
 
             {/* 快捷键提示 */}
             {action.status !== 'completed' && (
-              <div className="ml-auto text-slate-300 opacity-0 group-hover/step:opacity-100 transition-opacity">
+              <div className="ml-auto text-slate-400 opacity-0 group-hover/step:opacity-100 transition-opacity bg-slate-100 px-3 py-1 rounded-lg font-medium text-xs">
                 <span>空格:开始 Enter:编辑 Del:删除</span>
               </div>
             )}

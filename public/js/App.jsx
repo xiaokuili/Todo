@@ -96,26 +96,28 @@ export function App() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#f8fafc] flex items-center justify-center">
-        <div className="text-slate-500">加载中...</div>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="glass-card px-8 py-6 rounded-2xl">
+          <div className="text-slate-600 font-medium">加载中...</div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="max-w-5xl mx-auto flex flex-col lg:flex-row gap-4 p-4">
+    <div className="min-h-screen py-8">
+      <div className="max-w-6xl mx-auto flex flex-col lg:flex-row gap-6 px-4">
         {/* 左侧：日历筛选 */}
-        <aside className="w-full lg:w-64 flex-shrink-0">
-          <div className="bg-white border border-slate-200 rounded-md p-4 sticky top-4">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-sm font-bold flex items-center gap-2">
-                <CalendarIcon className="w-4 h-4" />
+        <aside className="w-full lg:w-72 flex-shrink-0">
+          <div className="glass-card rounded-xl p-5 sticky top-8">
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-sm font-bold flex items-center gap-2 gradient-text">
+                <CalendarIcon className="w-5 h-5 text-slate-700" />
                 日历
               </h2>
               <button
                 onClick={handleClearFilter}
-                className="text-xs text-slate-400 hover:text-slate-600"
+                className="text-xs text-slate-400 hover:text-slate-700 font-medium px-2 py-1 rounded-lg hover:bg-slate-100"
               >
                 清除
               </button>
@@ -127,9 +129,9 @@ export function App() {
             <div className="mt-6">
               <button
                 onClick={handleAddTodo}
-                className="w-full bg-slate-900 text-white py-2 font-medium hover:bg-slate-700 transition-all flex items-center justify-center gap-2 text-sm"
+                className="w-full btn-gradient py-3 rounded-lg font-semibold flex items-center justify-center gap-2 text-sm"
               >
-                <Plus className="w-4 h-4" />
+                <Plus className="w-5 h-5" />
                 新建任务
               </button>
             </div>
@@ -140,13 +142,13 @@ export function App() {
         <main className="flex-1 min-w-0">
           {/* 快速添加任务 */}
           {isQuickAdding && (
-            <div className="bg-white border border-slate-900 rounded-md mb-4 p-3">
+            <div className="glass-card rounded-xl mb-5 p-4 border-2 border-slate-300">
               <input
                 type="text"
                 value={quickTaskName}
                 onChange={(e) => setQuickTaskName(e.target.value)}
                 placeholder="新任务名称（交付物）..."
-                className="w-full text-sm px-2 py-1 border-b border-slate-300 focus:outline-none focus:border-slate-900"
+                className="w-full text-sm px-3 py-2 border-b-2 border-slate-200 focus:outline-none focus:border-slate-900 bg-transparent font-medium"
                 autoFocus
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') handleQuickAdd();
@@ -156,10 +158,10 @@ export function App() {
                   }
                 }}
               />
-              <div className="flex gap-2 mt-2">
+              <div className="flex gap-2 mt-3">
                 <button
                   onClick={handleQuickAdd}
-                  className="text-xs px-3 py-1 bg-slate-900 text-white hover:bg-slate-700"
+                  className="text-xs px-4 py-2 btn-gradient rounded-lg font-semibold"
                 >
                   创建
                 </button>
@@ -168,7 +170,7 @@ export function App() {
                     setIsQuickAdding(false);
                     setQuickTaskName('');
                   }}
-                  className="text-xs px-3 py-1 text-slate-600 hover:text-slate-900"
+                  className="text-xs px-4 py-2 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg font-medium"
                 >
                   取消
                 </button>
@@ -176,11 +178,11 @@ export function App() {
             </div>
           )}
 
-          <header className="mb-4">
-            <h1 id="list-title" className="text-xl font-bold text-slate-900">
+          <header className="mb-6 glass-card rounded-xl p-6">
+            <h1 id="list-title" className="text-3xl font-bold gradient-text">
               {title}
             </h1>
-            <p id="list-subtitle" className="text-xs text-slate-500 mt-1">
+            <p id="list-subtitle" className="text-sm text-slate-600 mt-2 font-medium">
               {subtitle}
             </p>
           </header>

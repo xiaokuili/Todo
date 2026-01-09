@@ -69,25 +69,25 @@ export function Calendar({ todos, selectedDate, onSelectDate }) {
   return (
     <div>
       <div className="calendar-header flex items-center justify-between mb-4">
-        <span className="font-bold text-slate-700">
+        <span className="font-bold text-slate-800 text-base">
           {year}年 {monthNames[month]}
         </span>
         <div className="flex gap-1">
           <button
             onClick={handlePrevMonth}
-            className="p-1 hover:bg-slate-100 rounded"
+            className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors text-slate-600 hover:text-slate-900"
           >
             <ChevronLeft className="w-4 h-4" />
           </button>
           <button
             onClick={handleNextMonth}
-            className="p-1 hover:bg-slate-100 rounded"
+            className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors text-slate-600 hover:text-slate-900"
           >
             <ChevronRight className="w-4 h-4" />
           </button>
         </div>
       </div>
-      <div className="grid grid-cols-7 gap-1 text-center text-xs font-medium text-slate-400 mb-2">
+      <div className="grid grid-cols-7 gap-1.5 text-center text-xs font-semibold text-slate-500 mb-3">
         <div>日</div>
         <div>一</div>
         <div>二</div>
@@ -96,7 +96,7 @@ export function Calendar({ todos, selectedDate, onSelectDate }) {
         <div>五</div>
         <div>六</div>
       </div>
-      <div className="grid grid-cols-7 gap-1">{days}</div>
+      <div className="grid grid-cols-7 gap-1.5">{days}</div>
     </div>
   );
 }
