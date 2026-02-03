@@ -1,0 +1,111 @@
+[
+  {
+    "id": "ml4lmyyss6t40d6sla",
+    "name": "[aip] 导出1w条数据",
+    "description": "",
+    "project": "",
+    "start": "11:18",
+    "end": "14:28",
+    "date": "2026-02-02",
+    "steps": [],
+    "status": "pending",
+    "created": "2026-02-02T03:17:27.556Z",
+    "updated": "2026-02-02T06:28:37.200Z",
+    "actionItems": [
+      {
+        "id": "action_ml4lofmgva183",
+        "content": "代码开发",
+        "status": "completed",
+        "startTime": "2026-02-02T03:18:37.125Z",
+        "endTime": "2026-02-02T05:40:43.848Z",
+        "duration": 8526723,
+        "note": null,
+        "autoStopped": true
+      },
+      {
+        "id": "action_ml4sgrk6em5td",
+        "content": "跑数据",
+        "status": "completed",
+        "startTime": "2026-02-02T06:28:36.516Z",
+        "endTime": "2026-02-02T06:28:37.200Z",
+        "duration": 684,
+        "note": null,
+        "autoStopped": false
+      }
+    ]
+  },
+  {
+    "id": "ml4ln85xxd5id2ijnjt",
+    "name": "[aig] 项目开始",
+    "description": "",
+    "project": "",
+    "start": null,
+    "end": null,
+    "date": "2026-02-02",
+    "steps": [],
+    "status": "pending",
+    "created": "2026-02-02T03:17:39.477Z",
+    "updated": "2026-02-02T03:17:49.444Z"
+  },
+  {
+    "id": "ml4lnvc3xx42i1lrtrh",
+    "name": "[Flowmix] 优化接口",
+    "description": "",
+    "project": "",
+    "start": null,
+    "end": null,
+    "date": "2026-02-02",
+    "steps": [],
+    "status": "pending",
+    "created": "2026-02-02T03:18:09.507Z",
+    "updated": "2026-02-02T03:18:09.507Z"
+  },
+  {
+    "id": "ml4sh1thcjxers3zyjm",
+    "name": "[aip] 话术 2h",
+    "description": "",
+    "project": "",
+    "start": "14:42",
+    "end": "16:01",
+    "date": "2026-02-02",
+    "steps": [],
+    "status": "pending",
+    "created": "2026-02-02T06:28:48.629Z",
+    "updated": "2026-02-02T08:01:50.706Z",
+    "actionItems": [
+      {
+        "id": "action_ml4shl79cu1r7",
+        "content": "下载资料",
+        "status": "completed",
+        "startTime": "2026-02-02T06:42:09.846Z",
+        "endTime": "2026-02-02T06:42:15.666Z",
+        "duration": 5820,
+        "note": null,
+        "autoStopped": false
+      },
+      {
+        "id": "action_ml4sybpdrnsyp",
+        "content": "开发",
+        "status": "completed",
+        "startTime": "2026-02-02T08:01:43.034Z",
+        "endTime": "2026-02-02T08:01:50.706Z",
+        "duration": 7672,
+        "note": null,
+        "autoStopped": false
+      }
+    ]
+  },
+  {
+    "id": "ml4sh77639f79shh7qb",
+    "name": "[aip] 省钱",
+    "description": "",
+    "project": "",
+    "start": null,
+    "end": null,
+    "date": "2026-02-02",
+    "steps": [],
+    "status": "pending",
+    "created": "2026-02-02T06:28:55.602Z",
+    "updated": "2026-02-02T06:28:55.602Z"
+  }
+]

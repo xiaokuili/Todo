@@ -1,0 +1,7 @@
+name = "todo-app"
+compatibility_date = "2024-01-01"
+pages_build_output_dir = "./dist"
+
+[[kv_namespaces]]
+binding = "TODO_KV"
+id = "07c266e9f9444c608175171f1bcf568e"  # 填入你的 KV ID

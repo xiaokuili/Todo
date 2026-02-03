@@ -13,7 +13,9 @@
     "start": "node server.js",
     "web": "concurrently \"npm run dev\" \"npm start\"",
     "format": "prettier --write \"public/**/*.{js,html,css,jsx}\"",
-    "lint": "eslint public/js --fix"
+    "lint": "eslint public/js --fix",
+    "cf:dev": "wrangler pages dev dist --kv TODO_KV",
+    "cf:deploy": "npm run build && wrangler pages deploy dist"
   },
   "keywords": ["todo", "cli", "task"],
   "author": "",

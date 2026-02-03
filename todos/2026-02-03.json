@@ -1,0 +1,72 @@
+[
+  {
+    "id": "ml5ye3tdv795qswytwq",
+    "name": "[aig] 环境搭建 6",
+    "description": "",
+    "project": "",
+    "start": null,
+    "end": null,
+    "date": "2026-02-03",
+    "steps": [],
+    "status": "pending",
+    "created": "2026-02-03T02:02:15.121Z",
+    "updated": "2026-02-03T02:05:32.750Z",
+    "actionItems": [
+      {
+        "id": "action_ml5yekyritlks",
+        "content": "后端fastapi搭建",
+        "status": "pending",
+        "startTime": null,
+        "endTime": null,
+        "duration": null,
+        "note": null,
+        "autoStopped": false
+      },
+      {
+        "id": "action_ml5yewo5rx4d4",
+        "content": "前端 react 搭建",
+        "status": "pending",
+        "startTime": null,
+        "endTime": null,
+        "duration": null,
+        "note": null,
+        "autoStopped": false
+      },
+      {
+        "id": "action_ml5yf848mm9sf",
+        "content": "任务框架 flowmix搭建",
+        "status": "pending",
+        "startTime": null,
+        "endTime": null,
+        "duration": null,
+        "note": null,
+        "autoStopped": false
+      }
+    ]
+  },
+  {
+    "id": "ml5yglzvtmdm3h7nnur",
+    "name": "[aig] 汉高通任务获取 4+4",
+    "description": "",
+    "project": "",
+    "start": null,
+    "end": null,
+    "date": "2026-02-03",
+    "steps": [],
+    "status": "pending",
+    "created": "2026-02-03T02:04:11.995Z",
+    "updated": "2026-02-03T02:05:40.133Z",
+    "actionItems": [
+      {
+        "id": "action_ml5yh174bqzcp",
+        "content": "han高通任务设计， 是否需要登陆，是否基于api，频率多少等",
+        "status": "pending",
+        "startTime": null,
+        "endTime": null,
+        "duration": null,
+        "note": null,
+        "autoStopped": false
+      }
+    ]
+  }
+]
